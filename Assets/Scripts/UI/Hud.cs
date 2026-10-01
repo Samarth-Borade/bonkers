@@ -118,8 +118,7 @@ public class Hud : MonoBehaviour
             15 * s, new Color(1, 1, 1, 0.7f), TextAnchor.MiddleCenter);
         y += 80 * s;
 
-        float blink = 0.6f + 0.4f * Mathf.Sin(Time.time * 5f);
-        Text(new Rect(0, y, Screen.width, 40 * s), "Press SPACE to start", 30 * s, new Color(1, 1, 1, blink), TextAnchor.MiddleCenter);
+        Text(new Rect(0, y, Screen.width, 40 * s), "Press SPACE to start", 30 * s, Color.white, TextAnchor.MiddleCenter);
     }
 
     void Controls(Rect r, string who, Color c, string move, string jump, string use)

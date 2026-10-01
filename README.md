@@ -84,7 +84,7 @@ Assets/
     PowerUps/                PowerUps (what each does), PowerUpBox (place-based prizes),
                              Projectile, DropStrike, Banana
     Hazards/                 Hazard (lava / spikes), Water, Grinder (saws)
-    Effects/                 FX (BONK!, floating text, particles, confetti)
+    Effects/                 FX (the "BONK!" text and other pop-up words)
     UI/                      Hud (panels, progress bar, title + win screens)
 docs/                        WebGL build served by GitHub Pages
 Documentation/               descriptive document + diagrams

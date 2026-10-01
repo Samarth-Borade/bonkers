@@ -14,7 +14,6 @@ public class PowerUpBox : MonoBehaviour
     SpriteRenderer sr;
     TextMesh mark, label;
     Vector2 home;
-    float seed;
     readonly Dictionary<PlayerController, float> readyAt = new Dictionary<PlayerController, float>();
 
     public static void Create(Vector2 pos, PowerUpType chaser, PowerUpType leader, Transform parent)
@@ -27,7 +26,6 @@ public class PowerUpBox : MonoBehaviour
         box.home = pos;
         box.chaserPrize = chaser;
         box.leaderPrize = leader;
-        box.seed = Random.value * 10f;
         box.sr = Shapes.Box("Box", Vector2.zero, new Vector2(0.7f, 0.7f), Color.white, 8, go.transform);
         box.mark = FX.Label("?", Vector2.zero, Color.black, 0.55f, go.transform, 9);
         box.label = FX.Label("", new Vector2(0, 0.75f), Color.white, 0.28f, go.transform, 9, true);
@@ -44,8 +42,6 @@ public class PowerUpBox : MonoBehaviour
 
     void Update()
     {
-        transform.position = home + Vector2.up * (0.08f * Mathf.Sin(Time.time * 3f + seed));
-
         var gm = GameManager.I;
         if (!gm) return;
 
@@ -59,7 +55,7 @@ public class PowerUpBox : MonoBehaviour
         if (!ReadyFor(viewer)) alpha *= 0.25f;
 
         var prize = PrizeFor(viewer);
-        var c = Color.Lerp(PowerUps.ColorOf(prize), Color.white, 0.25f);
+        var c = Color.white;
         c.a = alpha;
         sr.color = c;
         mark.color = new Color(0, 0, 0, alpha);
@@ -82,7 +78,6 @@ public class PowerUpBox : MonoBehaviour
         p.Held = PrizeFor(p);
         readyAt[p] = Time.time + Cooldown;
         FX.Pop(PowerUps.NameOf(p.Held) + "!", p.Head, PowerUps.ColorOf(p.Held), 0.6f);
-        FX.Burst(transform.position, Color.white, 10, 0.12f);
         Sfx.Play(Sfx.Pickup);
     }
 }

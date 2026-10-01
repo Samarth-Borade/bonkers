@@ -119,15 +119,15 @@ public static class LevelBuilder
         var go = new GameObject("Spikes");
         go.transform.SetParent(level, false);
         go.transform.position = new Vector2(x, top);
-        int n = Mathf.Max(1, Mathf.RoundToInt(width / 0.5f));
+        int n = Mathf.Max(1, Mathf.RoundToInt(width / 0.35f));
         float step = width / n;
         for (int i = 0; i < n; i++)
-            Shapes.Make("Spike", Shapes.Triangle, new Vector2(-width / 2f + step * (i + 0.5f), 0.27f),
-                new Vector2(step, 0.55f), Palette.Spikes, 3, go.transform);
+            Shapes.Make("Spike", Shapes.Triangle, new Vector2(-width / 2f + step * (i + 0.5f), 0.15f),
+                new Vector2(step, 0.3f), Palette.Spikes, 3, go.transform);
         var col = go.AddComponent<BoxCollider2D>();
         col.isTrigger = true;
-        col.offset = new Vector2(0, 0.2f);
-        col.size = new Vector2(width * 0.9f, 0.35f);
+        col.offset = new Vector2(0, 0.12f);
+        col.size = new Vector2(width * 0.9f, 0.22f);
         go.AddComponent<Hazard>().word = "SPIKED!";
     }
 
@@ -138,7 +138,6 @@ public static class LevelBuilder
         var col = sr.gameObject.AddComponent<BoxCollider2D>();
         col.isTrigger = true;
         sr.gameObject.AddComponent<Hazard>().word = "TOASTED!";
-        sr.gameObject.AddComponent<LavaGlow>();
     }
 
     static void WaterPool(int row, float x, float width)
@@ -168,7 +167,7 @@ public static class LevelBuilder
     static void BuildRowContent()
     {
         // Row 0 (run right)
-        Spikes(0, -5f, 1.5f);
+        Spikes(0, -5f, 1f);
         Lava(0, 3f, 2f);
         Box(0, -1f, PowerUpType.Fist, PowerUpType.Shield);
         Box(0, 8f, PowerUpType.Rocket, PowerUpType.Banana);
@@ -181,8 +180,8 @@ public static class LevelBuilder
 
         // Row 2 (run right)
         Lava(2, -5f, 2.5f);
-        Spikes(2, 2f, 1.2f);
-        Spikes(2, 6f, 1.2f);
+        Spikes(2, 2f, 0.8f);
+        Spikes(2, 6f, 0.8f);
         Box(2, -1.5f, PowerUpType.GravityBomb, PowerUpType.Shield);
         Box(2, 9f, PowerUpType.Fist, PowerUpType.Banana);
 
@@ -193,38 +192,17 @@ public static class LevelBuilder
         Box(3, -1.5f, PowerUpType.Reverse, PowerUpType.Banana);
 
         // Row 4 (run right)
-        Spikes(4, -5f, 1.5f);
-        Lava(4, 1f, 3f);
+        Spikes(4, -5f, 1f);
+        Lava(4, 1f, 1.8f);
         SawVertical(4, 6.5f, 0.6f, 2.1f, 2.2f);
         Box(4, -8.5f, PowerUpType.FreezeRay, PowerUpType.Shield);
         Box(4, 4f, PowerUpType.Rocket, PowerUpType.Banana);
 
         // Row 5 (run left) -> FLAG
         Lava(5, 4f, 2f);
-        Spikes(5, -2f, 1.5f);
+        Spikes(5, -2f, 1f);
         Saw(5, -9f, -6f, 0.8f, 1.8f);
         Box(5, 8.5f, PowerUpType.Swap, PowerUpType.Shield);
         Flag.Create(new Vector2(-14f, FloorTop(5)), level);
-    }
-}
-
-// Makes lava shimmer.
-public class LavaGlow : MonoBehaviour
-{
-    SpriteRenderer sr;
-    float seed;
-
-    void Start()
-    {
-        sr = GetComponent<SpriteRenderer>();
-        seed = Random.value * 10f;
-    }
-
-    void Update()
-    {
-        sr.color = Color.Lerp(Palette.Lava, Palette.LavaHot, 0.5f + 0.5f * Mathf.Sin(Time.time * 4f + seed));
-        if (Random.value < 0.03f)
-            FX.Burst((Vector2)transform.position + new Vector2(Random.Range(-0.5f, 0.5f) * transform.localScale.x, 0.1f),
-                Palette.LavaHot, 1, 0.1f, 2f);
     }
 }

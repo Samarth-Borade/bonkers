@@ -30,7 +30,7 @@ public class PlayerController : MonoBehaviour
 
     // Effect timers, in seconds left. Power-ups just set these.
     [HideInInspector] public float slowT, stunT, freezeT, reverseT, heavyT, speedT, superJumpT, shieldT;
-    float invulnT, safeT, spinT, coyoteT, bufferT, pushCooldown;
+    float invulnT, safeT, coyoteT, bufferT, pushCooldown;
     float controlVx, pushVx, lastVy;
     float moveInput;
     bool grounded, jumpHeld, ghosting;
@@ -38,7 +38,7 @@ public class PlayerController : MonoBehaviour
 
     Rigidbody2D rb;
     BoxCollider2D box;
-    Transform visual, eyeL, eyeR;
+    Transform visual;
     SpriteRenderer bodySr, shieldSr, iceSr, heldSr;
 
     public static readonly Vector2 Size = new Vector2(0.8f, 0.9f);
@@ -76,8 +76,6 @@ public class PlayerController : MonoBehaviour
         visual = new GameObject("Visual").transform;
         visual.SetParent(transform, false);
         bodySr = Shapes.Box("Body", Vector2.zero, Size, color, 10, visual);
-        eyeL = Shapes.Box("Eye L", Vector2.zero, new Vector2(0.12f, 0.2f), Color.black, 11, visual).transform;
-        eyeR = Shapes.Box("Eye R", Vector2.zero, new Vector2(0.12f, 0.2f), Color.black, 11, visual).transform;
 
         shieldSr = Shapes.Make("Shield", Shapes.Circle, Vector2.zero, new Vector2(1.6f, 1.6f), Palette.Shield, 12, transform);
         iceSr = Shapes.Box("Ice", Vector2.zero, new Vector2(1.05f, 1.15f), Palette.Ice, 13, transform);
@@ -91,7 +89,7 @@ public class PlayerController : MonoBehaviour
         float dt = Time.deltaTime;
         Tick(ref slowT, dt); Tick(ref stunT, dt); Tick(ref freezeT, dt); Tick(ref reverseT, dt);
         Tick(ref heavyT, dt); Tick(ref speedT, dt); Tick(ref superJumpT, dt); Tick(ref shieldT, dt);
-        Tick(ref invulnT, dt); Tick(ref safeT, dt); Tick(ref spinT, dt); Tick(ref pushCooldown, dt);
+        Tick(ref invulnT, dt); Tick(ref safeT, dt); Tick(ref pushCooldown, dt);
 
         moveInput = 0;
         jumpHeld = false;
@@ -107,7 +105,7 @@ public class PlayerController : MonoBehaviour
             if (Input.GetKeyDown(useKey)) PowerUps.Use(this);
         }
 
-        UpdateVisuals(dt);
+        UpdateVisuals();
     }
 
     static void Tick(ref float t, float dt) { if (t > 0) t -= dt; }
@@ -232,7 +230,6 @@ public class PlayerController : MonoBehaviour
 
         other.Shove(Mathf.Sign(dx) * 8f);
         pushCooldown = 0.45f;
-        FX.Burst((transform.position + other.transform.position) / 2f, Color.white, 5, 0.1f);
         Sfx.Play(Sfx.Shove, 0.7f);
     }
 
@@ -282,7 +279,6 @@ public class PlayerController : MonoBehaviour
         if (Bonk(null, 1f, "SLIPPED!"))
         {
             stunT = 1f;
-            spinT = 1f;
         }
     }
 
@@ -290,7 +286,6 @@ public class PlayerController : MonoBehaviour
     public void Die(string word)
     {
         if (safeT > 0) return;
-        FX.Burst(transform.position, color, 18, 0.18f);
         FX.Pop(word, Head, Color.white, 0.8f);
         Sfx.Play(Sfx.Die);
 
@@ -316,43 +311,25 @@ public class PlayerController : MonoBehaviour
 
     public void FaceTowards(float x) => Facing = x >= transform.position.x ? 1 : -1;
 
-    public void EnterWater() { waterCount++; if (waterCount == 1) FX.Burst(transform.position, Palette.Water, 8, 0.12f); }
+    public void EnterWater() { waterCount++; }
     public void ExitWater() { waterCount = Mathf.Max(0, waterCount - 1); }
 
     public Vector2 Head => (Vector2)transform.position + Vector2.up * 1.1f;
 
     // ---------------- looks ----------------
 
-    void UpdateVisuals(float dt)
+    // Plain colors only: the body color tells you what is happening to you.
+    void UpdateVisuals()
     {
         Color c = color;
-        if (heavyT > 0) c = Color.Lerp(c, Palette.Heavy, 0.55f);
-        if (reverseT > 0) c = Color.Lerp(c, Palette.Reverse, 0.45f + 0.2f * Mathf.Sin(Time.time * 20f));
-        if (speedT > 0) c = Color.Lerp(c, Color.white, 0.35f * Mathf.PingPong(Time.time * 6f, 1f));
-        if (slowT > 0) c = new Color(c.r * 0.65f, c.g * 0.65f, c.b * 0.65f);
-        c.a = safeT > 0 && Mathf.Repeat(Time.time, 0.16f) < 0.08f ? 0.25f : 1f;
+        if (heavyT > 0) c = Palette.Heavy;
+        if (reverseT > 0) c = Palette.Reverse;
+        if (slowT > 0) c = new Color(c.r * 0.6f, c.g * 0.6f, c.b * 0.6f);
         bodySr.color = c;
 
         shieldSr.enabled = shieldT > 0;
-        if (shieldT > 0) shieldSr.transform.localScale = Vector3.one * (1.55f + 0.08f * Mathf.Sin(Time.time * 8f));
         iceSr.enabled = freezeT > 0;
-
         heldSr.enabled = Held != PowerUpType.None;
-        if (heldSr.enabled)
-        {
-            heldSr.color = PowerUps.ColorOf(Held);
-            heldSr.transform.localPosition = new Vector2(0, 0.85f + 0.06f * Mathf.Sin(Time.time * 6f));
-        }
-
-        float look = Facing * 0.1f;
-        eyeL.localPosition = new Vector2(look - 0.13f, 0.14f);
-        eyeR.localPosition = new Vector2(look + 0.13f, 0.14f);
-
-        if (spinT > 0) visual.Rotate(0, 0, 900f * dt * -Facing);
-        else visual.localRotation = Quaternion.identity;
-
-        // Squish a little while moving on the ground.
-        float squish = grounded && Mathf.Abs(controlVx) > 0.5f ? 0.04f * Mathf.Sin(Time.time * 30f) : 0f;
-        visual.localScale = new Vector3(1f + squish, 1f - squish, 1f);
+        if (heldSr.enabled) heldSr.color = PowerUps.ColorOf(Held);
     }
 }

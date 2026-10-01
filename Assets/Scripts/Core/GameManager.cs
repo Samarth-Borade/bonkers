@@ -107,8 +107,6 @@ public class GameManager : MonoBehaviour
         wonAt = Time.time;
         if (p == Red) RedWins++; else YellowWins++;
         SetControls(false);
-        FX.Confetti(p.transform.position);
-        CameraRig.Shake(0.3f, 0.4f);
         Sfx.Play(Sfx.Win);
     }
 

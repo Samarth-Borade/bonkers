@@ -3,8 +3,6 @@ using UnityEngine;
 // First one to touch this wins.
 public class Flag : MonoBehaviour
 {
-    Transform cloth;
-
     public static void Create(Vector2 groundPos, Transform parent)
     {
         var go = new GameObject("Flag");
@@ -27,12 +25,7 @@ public class Flag : MonoBehaviour
         col.offset = new Vector2(0, 1.1f);
         col.size = new Vector2(1f, 2.2f);
 
-        go.AddComponent<Flag>().cloth = cloth;
-    }
-
-    void Update()
-    {
-        cloth.localScale = new Vector3(1f + 0.12f * Mathf.Sin(Time.time * 6f), 1f, 1f);
+        go.AddComponent<Flag>();
     }
 
     void OnTriggerEnter2D(Collider2D other)

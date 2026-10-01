@@ -5,7 +5,6 @@ public class Projectile : MonoBehaviour
 {
     PlayerController owner;
     System.Action<PlayerController> onHit;
-    Color color;
     float life = 2f;
 
     public static void Fire(PlayerController owner, Color color, float speed, bool round,
@@ -28,15 +27,12 @@ public class Projectile : MonoBehaviour
         var p = go.AddComponent<Projectile>();
         p.owner = owner;
         p.onHit = onHit;
-        p.color = color;
     }
 
     void Update()
     {
         life -= Time.deltaTime;
         if (life <= 0) Destroy(gameObject);
-        // little trail
-        if (Random.value < 0.5f) FX.Burst(transform.position, color, 1, 0.08f);
     }
 
     void OnTriggerEnter2D(Collider2D other)
@@ -50,7 +46,6 @@ public class Projectile : MonoBehaviour
             return;
         }
         if (other.isTrigger) return; // fly through water, boxes, etc.
-        FX.Burst(transform.position, color, 6, 0.12f);
         Destroy(gameObject);
     }
 }

@@ -89,8 +89,6 @@ public static class PowerUps
                 if (foe.Blocks()) break;
                 Vector2 a = p.transform.position, b = foe.transform.position;
                 int rowA = p.Row, rowB = foe.Row;
-                FX.Burst(a, ColorOf(type), 14, 0.15f);
-                FX.Burst(b, ColorOf(type), 14, 0.15f);
                 p.TeleportTo(b, rowB);
                 foe.TeleportTo(a, rowA);
                 FX.Pop("SWAP!", p.Head, ColorOf(type), 1f);

@@ -2,7 +2,7 @@ using UnityEngine;
 
 // A bomb that drops on the opponent from the roof of their row. Always dodgeable:
 //   1) Aim   - the warning beam follows them and leads their running (0.5s)
-//   2) Lock  - the beam flashes and stops moving (0.45s). Stop, turn back or jump away!
+//   2) Lock  - the beam turns darker and stops moving (0.45s). Stop, turn back or jump away!
 //   3) Drop  - the bomb falls fast. Still standing under it? BONK.
 public class DropStrike : MonoBehaviour
 {
@@ -68,7 +68,7 @@ public class DropStrike : MonoBehaviour
         else if (age < AimTime + LockTime)
         {
             var c = beam.color;
-            c.a = Mathf.Repeat(age, 0.1f) < 0.05f ? 0.45f : 0.15f;
+            c.a = 0.45f; // locked: the beam goes darker
             beam.color = c;
         }
         else
@@ -91,7 +91,6 @@ public class DropStrike : MonoBehaviour
             return;
         }
         if (other.isTrigger) return;
-        FX.Burst(transform.position, color, 8, 0.14f);
         Destroy(gameObject);
     }
 }
