@@ -63,7 +63,7 @@ public class Hud : MonoBehaviour
     void ProgressBar(GameManager gm, float s)
     {
         float w = 360 * s, h = 8 * s;
-        var bar = new Rect((Screen.width - w) / 2f, 84 * s, w, h);
+        var bar = new Rect((Screen.width - w) / 2f, 76 * s, w, h);
         Fill(new Rect(bar.x - 2 * s, bar.y - 2 * s, bar.width + 4 * s, bar.height + 4 * s), new Color(0, 0, 0, 0.5f));
         Fill(bar, new Color(1, 1, 1, 0.12f));
         for (int i = 1; i < LevelBuilder.Rows; i++)

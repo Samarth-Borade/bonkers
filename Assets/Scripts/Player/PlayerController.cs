@@ -19,8 +19,8 @@ public class PlayerController : MonoBehaviour
     public float moveSpeed = 8f;
     public float groundAccel = 80f;
     public float airAccel = 50f;
-    public float jumpVelocity = 16f;
-    public float gravity = 3.5f;
+    public float jumpVelocity = 15f;
+    public float gravity = 3f;
     public float maxFall = 22f;
 
     public PowerUpType Held { get; set; } = PowerUpType.None;
@@ -41,7 +41,7 @@ public class PlayerController : MonoBehaviour
     Transform visual;
     SpriteRenderer bodySr, shieldSr, iceSr, heldSr;
 
-    public static readonly Vector2 Size = new Vector2(0.8f, 0.9f);
+    public static readonly Vector2 Size = new Vector2(0.6f, 0.7f);
     public bool InWater => waterCount > 0;
     public Vector2 Velocity => rb.linearVelocity;
 
@@ -77,9 +77,9 @@ public class PlayerController : MonoBehaviour
         visual.SetParent(transform, false);
         bodySr = Shapes.Box("Body", Vector2.zero, Size, color, 10, visual);
 
-        shieldSr = Shapes.Make("Shield", Shapes.Circle, Vector2.zero, new Vector2(1.6f, 1.6f), Palette.Shield, 12, transform);
-        iceSr = Shapes.Box("Ice", Vector2.zero, new Vector2(1.05f, 1.15f), Palette.Ice, 13, transform);
-        heldSr = Shapes.Make("Held", Shapes.Circle, new Vector2(0, 0.85f), new Vector2(0.3f, 0.3f), Color.white, 14, transform);
+        shieldSr = Shapes.Make("Shield", Shapes.Circle, Vector2.zero, new Vector2(1.2f, 1.2f), Palette.Shield, 12, transform);
+        iceSr = Shapes.Box("Ice", Vector2.zero, new Vector2(0.8f, 0.9f), Palette.Ice, 13, transform);
+        heldSr = Shapes.Make("Held", Shapes.Circle, new Vector2(0, 0.6f), new Vector2(0.25f, 0.25f), Color.white, 14, transform);
     }
 
     // ---------------- input (every frame) ----------------
@@ -95,20 +95,25 @@ public class PlayerController : MonoBehaviour
         jumpHeld = false;
         if (ControlsEnabled && stunT <= 0 && freezeT <= 0)
         {
-            if (Input.GetKey(leftKey)) moveInput -= 1;
-            if (Input.GetKey(rightKey)) moveInput += 1;
+            if (KeyHeld(leftKey)) moveInput -= 1;
+            if (KeyHeld(rightKey)) moveInput += 1;
             if (reverseT > 0) moveInput = -moveInput;
             if (moveInput != 0) Facing = moveInput > 0 ? 1 : -1;
 
-            if (Input.GetKeyDown(jumpKey)) bufferT = 0.12f;
-            jumpHeld = Input.GetKey(jumpKey);
-            if (Input.GetKeyDown(useKey)) PowerUps.Use(this);
+            if (KeyDown(jumpKey)) bufferT = 0.12f;
+            jumpHeld = KeyHeld(jumpKey);
+            if (KeyDown(useKey)) PowerUps.Use(this);
         }
 
         UpdateVisuals();
     }
 
     static void Tick(ref float t, float dt) { if (t > 0) t -= dt; }
+
+    // Test hook: an automated test (DevBot) can press keys instead of the keyboard.
+    public System.Func<KeyCode, bool> testHeld, testDown;
+    bool KeyHeld(KeyCode k) => testHeld != null ? testHeld(k) : Input.GetKey(k);
+    bool KeyDown(KeyCode k) => testDown != null ? testDown(k) : Input.GetKeyDown(k);
 
     // ---------------- physics (fixed steps) ----------------
 
@@ -283,9 +288,14 @@ public class PlayerController : MonoBehaviour
     }
 
     // Lava / spikes / grinder: back to the start of the row you were on.
+    public int Deaths { get; private set; }
+    public string LastDeath { get; private set; }
+
     public void Die(string word)
     {
         if (safeT > 0) return;
+        Deaths++;
+        LastDeath = word + " at x=" + transform.position.x.ToString("0.0") + " row " + (Row + 1);
         FX.Pop(word, Head, Color.white, 0.8f);
         Sfx.Play(Sfx.Die);
 
@@ -314,7 +324,7 @@ public class PlayerController : MonoBehaviour
     public void EnterWater() { waterCount++; }
     public void ExitWater() { waterCount = Mathf.Max(0, waterCount - 1); }
 
-    public Vector2 Head => (Vector2)transform.position + Vector2.up * 1.1f;
+    public Vector2 Head => (Vector2)transform.position + Vector2.up * 0.9f;
 
     // ---------------- looks ----------------
 

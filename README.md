@@ -78,7 +78,8 @@ Assets/
   Editor/BonkersSetup.cs     "Bonkers" menu: rebuild scene, build Mac / Windows / WebGL
   Scripts/
     Core/                    GameManager (title, countdown, race, win), CameraRig, Palette,
-                             Shapes (makes sprites), Sfx (makes sounds), DevScreenshots (test helper)
+                             Shapes (makes sprites), Sfx (makes sounds),
+                             DevScreenshots + DevBot (test helpers, only run with a command-line flag)
     Level/                   LevelBuilder (layout + which prize is in each box), Flag
     Player/                  PlayerController (move, jump, shove, stomp, status effects)
     PowerUps/                PowerUps (what each does), PowerUpBox (place-based prizes),

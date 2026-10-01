@@ -37,6 +37,7 @@ public class GameManager : MonoBehaviour
 
         if (!GetComponent<Hud>()) gameObject.AddComponent<Hud>();
         DevScreenshots.AttachIfRequested(gameObject);
+        DevBot.AttachIfRequested(gameObject);
     }
 
     void Start()

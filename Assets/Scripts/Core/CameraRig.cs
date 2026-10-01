@@ -5,7 +5,7 @@ using UnityEngine;
 public class CameraRig : MonoBehaviour
 {
     // World area that must always be visible (extra room at the top for the HUD).
-    const float Left = -16.4f, Right = 16.4f, Bottom = -9.2f, Top = 11.2f;
+    const float Left = -16.4f, Right = 16.4f, Bottom = -9.2f, Top = 12f;
 
     Camera cam;
 

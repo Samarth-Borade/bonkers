@@ -20,7 +20,7 @@ public static class LevelBuilder
     public const float HalfWidth = 15.5f;    // inner edge of the side walls
     public const float GapWidth = 3f;
     public const float FloorThickness = 0.4f;
-    public const float CeilingY = 9f;
+    public const float CeilingY = 9.6f;     // same headroom on the top row as every other row
 
     // Floors between rows. Super Jump uses this to fly through them.
     public static readonly HashSet<Collider2D> Floors = new HashSet<Collider2D>();
@@ -153,9 +153,6 @@ public static class LevelBuilder
     static void Saw(int row, float x0, float x1, float height, float speed) =>
         Grinder.Create(new Vector2(x0, FloorTop(row) + height), new Vector2(x1, FloorTop(row) + height), speed, level);
 
-    static void SawVertical(int row, float x, float y0, float y1, float speed) =>
-        Grinder.Create(new Vector2(x, FloorTop(row) + y0), new Vector2(x, FloorTop(row) + y1), speed, level);
-
     // Every box has two fixed prizes: one for whoever is CHASING, one for whoever is LEADING.
     static void Box(int row, float x, PowerUpType chaser, PowerUpType leader) =>
         PowerUpBox.Create(new Vector2(x, FloorTop(row) + 0.75f), chaser, leader, level);
@@ -174,19 +171,19 @@ public static class LevelBuilder
 
         // Row 1 (run left)
         WaterPool(1, 2f, 6f);
-        Saw(1, -7.5f, -3f, 0.8f, 1.6f);
+        Saw(1, -7.5f, -3f, 0.4f, 1.1f);
         Box(1, 7.5f, PowerUpType.FreezeRay, PowerUpType.Banana);
         Box(1, -9.5f, PowerUpType.SuperJump, PowerUpType.Shield);
 
         // Row 2 (run right)
-        Lava(2, -5f, 2.5f);
+        Lava(2, -5f, 2f);
         Spikes(2, 2f, 0.8f);
         Spikes(2, 6f, 0.8f);
         Box(2, -1.5f, PowerUpType.GravityBomb, PowerUpType.Shield);
         Box(2, 9f, PowerUpType.Fist, PowerUpType.Banana);
 
         // Row 3 (run left)
-        Saw(3, 1f, 7f, 0.8f, 1.3f);
+        Saw(3, 1f, 7f, 0.4f, 0.9f);
         WaterPool(3, -5.5f, 5f);
         Box(3, 8.5f, PowerUpType.SuperJump, PowerUpType.Shield);
         Box(3, -1.5f, PowerUpType.Reverse, PowerUpType.Banana);
@@ -194,14 +191,14 @@ public static class LevelBuilder
         // Row 4 (run right)
         Spikes(4, -5f, 1f);
         Lava(4, 1f, 1.8f);
-        SawVertical(4, 6.5f, 0.6f, 2.1f, 2.2f);
+        Saw(4, 5.5f, 8.5f, 0.4f, 1.0f);
         Box(4, -8.5f, PowerUpType.FreezeRay, PowerUpType.Shield);
         Box(4, 4f, PowerUpType.Rocket, PowerUpType.Banana);
 
         // Row 5 (run left) -> FLAG
         Lava(5, 4f, 2f);
         Spikes(5, -2f, 1f);
-        Saw(5, -9f, -6f, 0.8f, 1.8f);
+        Saw(5, -9f, -6f, 0.4f, 1.2f);
         Box(5, 8.5f, PowerUpType.Swap, PowerUpType.Shield);
         Flag.Create(new Vector2(-14f, FloorTop(5)), level);
     }
