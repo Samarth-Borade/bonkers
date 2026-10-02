@@ -10,9 +10,9 @@ A two-player, one-keyboard platform race where hidden ? boxes hand attacks to wh
 🟡 Yellow: ← / → move · ↑ jump · ↓ use power
 Space = start / rematch · R = restart · Esc = menu
 
-* 🎮 **[Play](https://samarth-borade.github.io/bonkers/):** 
-* 🎬 **[Video](https://drive.google.com/file/d/1gCWmPWH93bUMEy1XSR4AcbgffAZ_UfZi/view?usp=sharing):** 
-* 📄 **[Doc](https://docs.google.com/document/d/1f4oJ6Vpd7-EgarYiFouQOFJMvoar0WxVveQgu0RIrkk/edit?usp=sharing):** 
-* 💻 **[Repo](https://github.com/Samarth-Borade/bonkers):**
+* 🎮 **[Play](https://samarth-borade.github.io/bonkers/)** 
+* 🎬 **[Video](https://drive.google.com/file/d/1gCWmPWH93bUMEy1XSR4AcbgffAZ_UfZi/view?usp=sharing)** 
+* 📄 **[Doc](https://docs.google.com/document/d/1f4oJ6Vpd7-EgarYiFouQOFJMvoar0WxVveQgu0RIrkk/edit?usp=sharing)** 
+* 💻 **[Repo](https://github.com/Samarth-Borade/bonkers)**
 
 **Team:** Harsh Mangukiya, Prachi Dave, Samarth Borade
