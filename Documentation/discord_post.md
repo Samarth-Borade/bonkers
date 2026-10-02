@@ -11,7 +11,7 @@ A two-player, one-keyboard platform race where hidden ? boxes hand attacks to wh
 Space = start / rematch · R = restart · Esc = menu
 
 🎮 **Play:** https://samarth-borade.github.io/bonkers/
-🎬 **Video:** [video link]
+🎬 **Video:** https://drive.google.com/file/d/1EIpi07QkvzfnXRgKIKbEjONxX6q6MHzv/view?usp=sharing
 📄 **Doc:** [doc link]
 💻 **Repo:** https://github.com/Samarth-Borade/bonkers
 
