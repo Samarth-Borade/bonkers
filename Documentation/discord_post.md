@@ -8,11 +8,14 @@ A two-player, one-keyboard 2D platform race where hidden ? boxes hand attacks to
 **Playable Prototype:**
 https://samarth-borade.github.io/bonkers/
 
+**Repo:**
+https://github.com/Samarth-Borade/bonkers
+
 **Gameplay Video:**
-<video link>
+https://drive.google.com/file/d/1gCWmPWH93bUMEy1XSR4AcbgffAZ_UfZi/view?usp=sharing
 
 **GDD / Descriptive Document:**
-<doc link>
+https://docs.google.com/document/d/1f4oJ6Vpd7-EgarYiFouQOFJMvoar0WxVveQgu0RIrkk/edit?usp=sharing
 
 **Genre:**
 2D Platformer, Local Versus Racing
