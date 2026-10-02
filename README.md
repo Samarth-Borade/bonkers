@@ -6,7 +6,7 @@ A two-player, one-keyboard platform race. Red vs Yellow, one screen, first to th
 Hidden **?** boxes hand attacks to whoever is behind and only defence to whoever is ahead,
 so no lead is ever safe and every race stays neck and neck until the flag.
 
-- **Play in the browser:** https://[username].github.io/bonkers/
+- **Play in the browser:** https://samarth-borade.github.io/bonkers/
 - **Gameplay video:** [link]
 - **Descriptive document:** [`Documentation/Bonkers_Paired_Prototype_Document.docx`](Documentation/Bonkers_Paired_Prototype_Document.docx)
 
@@ -102,7 +102,7 @@ Documentation/               descriptive document + diagrams
 
 | Name | Contributions |
 |---|---|
-| Samarth Borade | [fill in] |
-| [Teammate 2] | [fill in] |
-| [Teammate 3] | [fill in] |
+| Prachi Dave | Player movement and physics (run, jump, swim, shove, stomp), place-based ? box logic, WebGL build and GitHub Pages hosting |
+| Harsh Mangukiya | Level layout and hazards (lava, spikes, rolling saws, water), row-based respawn, jump-distance tuning, level diagram |
+| Samarth Borade | Power-up effects (projectiles, drop-bomb warning, shield, banana, swap), BONK feedback, HUD with progress bar, title and win screens |
 # bonkers
