@@ -86,4 +86,42 @@ public static class BonkersSetup
             else if (EditorSceneManager.GetActiveScene().path != ScenePath) EditorSceneManager.OpenScene(ScenePath);
         };
     }
+
+    // The level is built by code at Play, so the Scene view is empty while editing.
+    // This builds a look-only copy so you can see the layout without pressing Play.
+    // It is never saved, and it is removed automatically when you press Play.
+    const string PreviewName = "Level Preview (not saved)";
+
+    [MenuItem("Bonkers/Show Level in Scene View")]
+    public static void ShowLevelPreview()
+    {
+        HideLevelPreview();
+        var root = new GameObject(PreviewName);
+        LevelBuilder.Build(root.transform);
+        foreach (var t in root.GetComponentsInChildren<Transform>(true))
+            t.gameObject.hideFlags = HideFlags.DontSave;
+
+        var view = SceneView.lastActiveSceneView;
+        if (view)
+        {
+            view.in2DMode = true;
+            view.LookAt(new Vector3(0, 1, 0), Quaternion.identity, 11f);
+        }
+    }
+
+    [MenuItem("Bonkers/Hide Level Preview")]
+    public static void HideLevelPreview()
+    {
+        var old = GameObject.Find(PreviewName);
+        if (old) Object.DestroyImmediate(old);
+    }
+
+    [InitializeOnLoadMethod]
+    static void HidePreviewOnPlay()
+    {
+        EditorApplication.playModeStateChanged += state =>
+        {
+            if (state == PlayModeStateChange.ExitingEditMode) HideLevelPreview();
+        };
+    }
 }
