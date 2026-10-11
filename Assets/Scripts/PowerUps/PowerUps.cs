@@ -47,7 +47,7 @@ public static class PowerUps
         PowerUpType.Swap => "swap places",
         PowerUpType.GravityBomb => "drop on them: heavy",
         PowerUpType.Reverse => "drop on them: confused",
-        PowerUpType.SuperJump => "jump through floors",
+        PowerUpType.SuperJump => "jump up to their row",
         PowerUpType.Rocket => "go fast",
         PowerUpType.Shield => "block one hit",
         PowerUpType.BrickWall => "wall in front of them",

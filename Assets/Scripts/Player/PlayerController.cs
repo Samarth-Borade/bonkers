@@ -186,9 +186,13 @@ public class PlayerController : MonoBehaviour
 
     // Super Jump lets you fly up THROUGH floors. We switch floor collisions off while rising,
     // and back on once we're falling and clear of the floor.
+    // It can only carry you up to your rival's row (one row below if they're already on the top row),
+    // so it closes the gap but can never leapfrog the leader straight to the flag.
     void UpdateGhost(float vy)
     {
-        bool want = superJumpT > 0 && vy > 0.5f;
+        int maxRow = opponent.Row >= LevelBuilder.Rows - 1 ? LevelBuilder.Rows - 2 : opponent.Row;
+        int nextFloorRow = LevelBuilder.RowFromY(transform.position.y) + 1;
+        bool want = superJumpT > 0 && vy > 0.5f && nextFloorRow <= maxRow;
         if (want && !ghosting) SetGhost(true);
         else if (!want && ghosting && !OverlapsFloor()) SetGhost(false);
     }
@@ -306,6 +310,7 @@ public class PlayerController : MonoBehaviour
         safeT = 1.5f;
         stunT = Mathf.Max(stunT, 0.35f);
         freezeT = 0;
+        superJumpT = 0; // dying ends Super Jump
         waterCount = 0;
     }
 
