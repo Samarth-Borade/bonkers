@@ -23,8 +23,9 @@ public class Hud : MonoBehaviour
         Text(new Rect(0, 12 * s, Screen.width, 40 * s),
             $"<color=#{Hex(Palette.Red)}>{GameManager.RedWins}</color>  -  <color=#{Hex(Palette.Yellow)}>{GameManager.YellowWins}</color>",
             30 * s, Color.white, TextAnchor.UpperCenter);
-        if (gm.Phase == GameManager.State.Race || gm.Phase == GameManager.State.Won)
-            Text(new Rect(0, 46 * s, Screen.width, 30 * s), gm.RaceTime.ToString("0.0") + "s", 18 * s, new Color(1, 1, 1, 0.6f), TextAnchor.UpperCenter);
+        string info = $"Race {GameManager.Round + 1}  ·  {LevelBuilder.Names[GameManager.Level]}";
+        if (gm.Phase == GameManager.State.Race || gm.Phase == GameManager.State.Won) info += $"  ·  {gm.RaceTime:0.0}s";
+        Text(new Rect(0, 46 * s, Screen.width, 30 * s), info, 15 * s, new Color(1, 1, 1, 0.6f), TextAnchor.UpperCenter);
         ProgressBar(gm, s);
 
         switch (gm.Phase)
@@ -93,6 +94,7 @@ public class Hud : MonoBehaviour
         if (p.speedT > 0) e += "ZOOM  ";
         if (p.superJumpT > 0) e += "SUPER JUMP  ";
         if (p.shieldT > 0) e += "SHIELD  ";
+        if (p.ghostT > 0) e += "GHOST  ";
         return e.Trim();
     }
 
@@ -104,7 +106,7 @@ public class Hud : MonoBehaviour
         Text(new Rect(0, y, Screen.width, 130 * s),
             $"<color=#{Hex(Palette.Red)}>BON</color><color=#{Hex(Palette.Yellow)}>KERS!</color>", 110 * s, Color.white, TextAnchor.MiddleCenter);
         y += 125 * s;
-        Text(new Rect(0, y, Screen.width, 30 * s), "Race to the flag. Bonk your friend on the way.", 22 * s, new Color(1, 1, 1, 0.8f), TextAnchor.MiddleCenter);
+        Text(new Rect(0, y, Screen.width, 30 * s), "Race to the flag. Bonk your friend on the way. Best of 3 races.", 22 * s, new Color(1, 1, 1, 0.8f), TextAnchor.MiddleCenter);
         y += 60 * s;
 
         float w = 330 * s;
@@ -114,11 +116,12 @@ public class Hud : MonoBehaviour
 
         Text(new Rect(0, y, Screen.width, 60 * s),
             "Hidden <b>?</b> boxes give a FIXED prize based on your place: <b>chasing = attacks</b>, <b>leading = defence</b>.\n" +
-            "Every attack can be dodged. Shove your rival, STOMP their head. Lava, spikes and saws send you back.",
+            "Chasing? Jump up to a lever to spring a trap ahead. Every attack can be dodged. Shove, STOMP, don't touch the lava.",
             15 * s, new Color(1, 1, 1, 0.7f), TextAnchor.MiddleCenter);
         y += 80 * s;
 
         Text(new Rect(0, y, Screen.width, 40 * s), "Press SPACE to start", 30 * s, Color.white, TextAnchor.MiddleCenter);
+        Text(new Rect(0, Screen.height - 30 * s, Screen.width - 12 * s, 24 * s), "build: " + Application.version, 12 * s, new Color(1, 1, 1, 0.4f), TextAnchor.LowerRight);
     }
 
     void Controls(Rect r, string who, Color c, string move, string jump, string use)
@@ -134,10 +137,21 @@ public class Hud : MonoBehaviour
     void WinScreen(GameManager gm, float s)
     {
         var w = gm.Winner;
-        Fill(new Rect(0, Screen.height * 0.36f, Screen.width, 190 * s), new Color(0, 0, 0, 0.7f));
-        Text(new Rect(0, Screen.height * 0.36f + 10 * s, Screen.width, 110 * s), w.displayName + " WINS!", 90 * s, w.color, TextAnchor.MiddleCenter);
-        Text(new Rect(0, Screen.height * 0.36f + 120 * s, Screen.width, 30 * s), $"in {gm.RaceTime:0.0} seconds", 20 * s, Color.white, TextAnchor.MiddleCenter);
-        Text(new Rect(0, Screen.height * 0.36f + 150 * s, Screen.width, 30 * s), "SPACE = rematch     ESC = menu", 18 * s, new Color(1, 1, 1, 0.7f), TextAnchor.MiddleCenter);
+        float top = Screen.height * 0.36f;
+        string score = $"<color=#{Hex(Palette.Red)}>{GameManager.RedWins}</color> - <color=#{Hex(Palette.Yellow)}>{GameManager.YellowWins}</color>";
+        Fill(new Rect(0, top, Screen.width, 190 * s), new Color(0, 0, 0, 0.7f));
+        if (gm.MatchOver)
+        {
+            Text(new Rect(0, top + 10 * s, Screen.width, 110 * s), w.displayName + " WINS THE MATCH!", 70 * s, w.color, TextAnchor.MiddleCenter);
+            Text(new Rect(0, top + 120 * s, Screen.width, 30 * s), "Final score  " + score, 22 * s, Color.white, TextAnchor.MiddleCenter);
+            Text(new Rect(0, top + 152 * s, Screen.width, 30 * s), "SPACE = new match     ESC = menu", 18 * s, new Color(1, 1, 1, 0.7f), TextAnchor.MiddleCenter);
+        }
+        else
+        {
+            Text(new Rect(0, top + 10 * s, Screen.width, 110 * s), w.displayName + $" WINS RACE {GameManager.Round + 1}!", 70 * s, w.color, TextAnchor.MiddleCenter);
+            Text(new Rect(0, top + 120 * s, Screen.width, 30 * s), $"in {gm.RaceTime:0.0}s     Match  " + score + $"     (first to {GameManager.WinsNeeded})", 20 * s, Color.white, TextAnchor.MiddleCenter);
+            Text(new Rect(0, top + 152 * s, Screen.width, 30 * s), "SPACE = next race     ESC = menu", 18 * s, new Color(1, 1, 1, 0.7f), TextAnchor.MiddleCenter);
+        }
     }
 
     // ---------- helpers ----------

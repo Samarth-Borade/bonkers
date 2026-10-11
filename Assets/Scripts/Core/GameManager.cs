@@ -1,7 +1,8 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-// Runs the match: Title -> 3,2,1 Countdown -> Race -> Someone wins -> play again.
+// Runs the match: Title -> 3,2,1 -> Race -> someone touches the flag -> next race.
+// A match is best of 3: first to win 2 races wins. Each race is on the next level.
 // The whole level is built from code when the scene starts (see LevelBuilder).
 public class GameManager : MonoBehaviour
 {
@@ -16,10 +17,16 @@ public class GameManager : MonoBehaviour
     public float CountdownLeft { get; private set; }
     public float RaceTime { get; private set; }
 
-    // Static so the score survives the scene reload between rounds.
+    public const int WinsNeeded = 2;
+
+    // Static so the match survives the scene reload between races.
     public static int RedWins { get; private set; }
     public static int YellowWins { get; private set; }
-    static bool skipTitle;
+    public static int Round { get; private set; }          // races played so far in this match
+    public static int Level => Round % LevelBuilder.LevelCount;
+    public bool MatchOver => RedWins >= WinsNeeded || YellowWins >= WinsNeeded;
+
+    static bool skipTitle, argsRead;
 
     const float CountdownLength = 3f;
     int lastBeep;
@@ -29,8 +36,10 @@ public class GameManager : MonoBehaviour
     {
         I = this;
         Application.targetFrameRate = 120;
+        ReadLevelArg();
         EnsureCamera();
 
+        LevelBuilder.Current = Level;
         var players = LevelBuilder.Build(transform);
         Red = players.red;
         Yellow = players.yellow;
@@ -47,7 +56,7 @@ public class GameManager : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Escape)) { skipTitle = false; Reload(); return; }
+        if (Input.GetKeyDown(KeyCode.Escape)) { ResetMatch(); skipTitle = false; Reload(); return; }
 
         switch (Phase)
         {
@@ -64,12 +73,15 @@ public class GameManager : MonoBehaviour
 
             case State.Race:
                 RaceTime += Time.deltaTime;
-                if (Input.GetKeyDown(KeyCode.R)) { skipTitle = true; Reload(); }
+                RaceAnalytics.TrackLeader(IsLeading(Red) ? 1 : IsLeading(Yellow) ? 2 : 0);
+                if (Input.GetKeyDown(KeyCode.R)) { skipTitle = true; Reload(); } // replay this race
                 break;
 
             case State.Won:
-                if (Time.time - wonAt > 1.2f && (StartPressed() || Input.GetKeyDown(KeyCode.R)))
+                if (Time.time - wonAt > 1.2f && StartPressed())
                 {
+                    if (MatchOver) ResetMatch();
+                    else Round++;
                     skipTitle = true;
                     Reload();
                 }
@@ -95,6 +107,7 @@ public class GameManager : MonoBehaviour
     {
         Phase = State.Race;
         RaceTime = 0;
+        RaceAnalytics.BeginRace();
         SetControls(true);
         FX.Pop("GO!", new Vector2(0, 1), Palette.Go, 3f, 1f);
         Sfx.Play(Sfx.Go);
@@ -109,6 +122,15 @@ public class GameManager : MonoBehaviour
         if (p == Red) RedWins++; else YellowWins++;
         SetControls(false);
         Sfx.Play(Sfx.Win);
+
+        float gap = LevelBuilder.Rows - LevelBuilder.Progress(p.opponent);
+        RaceAnalytics.EndRace(this, Level, Round, p.displayName, RaceTime, gap);
+    }
+
+    static void ResetMatch()
+    {
+        RedWins = YellowWins = 0;
+        Round = 0;
     }
 
     void SetControls(bool on)
@@ -121,6 +143,17 @@ public class GameManager : MonoBehaviour
         Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter);
 
     static void Reload() => SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+
+    // Testing: "-bonkersLevel 3" starts on level 3.
+    static void ReadLevelArg()
+    {
+        if (argsRead) return;
+        argsRead = true;
+        var args = System.Environment.GetCommandLineArgs();
+        for (int i = 0; i < args.Length - 1; i++)
+            if (args[i] == "-bonkersLevel" && int.TryParse(args[i + 1], out int lv))
+                Round = Mathf.Clamp(lv - 1, 0, LevelBuilder.LevelCount - 1);
+    }
 
     static void EnsureCamera()
     {

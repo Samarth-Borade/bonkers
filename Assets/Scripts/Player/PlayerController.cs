@@ -29,7 +29,7 @@ public class PlayerController : MonoBehaviour
     public bool ControlsEnabled { get; set; }
 
     // Effect timers, in seconds left. Power-ups just set these.
-    [HideInInspector] public float slowT, stunT, freezeT, reverseT, heavyT, speedT, superJumpT, shieldT;
+    [HideInInspector] public float slowT, stunT, freezeT, reverseT, heavyT, speedT, superJumpT, shieldT, ghostT;
     float invulnT, safeT, coyoteT, bufferT, pushCooldown;
     float controlVx, pushVx, lastVy;
     float moveInput;
@@ -88,7 +88,7 @@ public class PlayerController : MonoBehaviour
     {
         float dt = Time.deltaTime;
         Tick(ref slowT, dt); Tick(ref stunT, dt); Tick(ref freezeT, dt); Tick(ref reverseT, dt);
-        Tick(ref heavyT, dt); Tick(ref speedT, dt); Tick(ref superJumpT, dt); Tick(ref shieldT, dt);
+        Tick(ref heavyT, dt); Tick(ref speedT, dt); Tick(ref superJumpT, dt); Tick(ref shieldT, dt); Tick(ref ghostT, dt);
         Tick(ref invulnT, dt); Tick(ref safeT, dt); Tick(ref pushCooldown, dt);
 
         moveInput = 0;
@@ -216,7 +216,7 @@ public class PlayerController : MonoBehaviour
         // Land on their head = STOMP.
         if (transform.position.y - other.transform.position.y > 0.7f && lastVy < -3f)
         {
-            other.Bonk(this, 1.5f, "STOMPED!");
+            if (other.Bonk(this, 1.5f, "STOMPED!")) RaceAnalytics.Stomp(this);
             var v = rb.linearVelocity;
             v.y = 12f;
             rb.linearVelocity = v;
@@ -279,12 +279,11 @@ public class PlayerController : MonoBehaviour
         return true;
     }
 
-    public void Slip()
+    public bool Slip()
     {
-        if (Bonk(null, 1f, "SLIPPED!"))
-        {
-            stunT = 1f;
-        }
+        if (!Bonk(null, 1f, "SLIPPED!")) return false;
+        stunT = 1f;
+        return true;
     }
 
     // Lava / spikes / grinder: back to the start of the row you were on.
@@ -293,8 +292,9 @@ public class PlayerController : MonoBehaviour
 
     public void Die(string word)
     {
-        if (safeT > 0) return;
+        if (safeT > 0 || ghostT > 0) return;
         Deaths++;
+        RaceAnalytics.Death(this, word);
         LastDeath = word + " at x=" + transform.position.x.ToString("0.0") + " row " + (Row + 1);
         FX.Pop(word, Head, Color.white, 0.8f);
         Sfx.Play(Sfx.Die);
@@ -335,6 +335,7 @@ public class PlayerController : MonoBehaviour
         if (heavyT > 0) c = Palette.Heavy;
         if (reverseT > 0) c = Palette.Reverse;
         if (slowT > 0) c = new Color(c.r * 0.6f, c.g * 0.6f, c.b * 0.6f);
+        if (ghostT > 0) c.a = 0.4f;
         bodySr.color = c;
 
         shieldSr.enabled = shieldT > 0;

@@ -11,8 +11,9 @@ using UnityEngine;
 //   row 0  START -> -> ->  gap ^
 //
 // Each floor has a gap at one end. Jump up through it to reach the next row.
-// Want a new level? Edit the "ROW CONTENT" section at the bottom.
-public static class LevelBuilder
+// The walls, floors and gaps are the same in every level. What goes on each row
+// (hazards, boxes, levers) lives in LevelLayouts.cs, one method per level.
+public static partial class LevelBuilder
 {
     public const int Rows = 6;
     public const float Bottom = -8f;        // top of the ground
@@ -53,6 +54,9 @@ public static class LevelBuilder
 
     static Transform level;
 
+    // Which level to build next (0, 1, 2). The GameManager sets this between races.
+    public static int Current;
+
     public static (PlayerController red, PlayerController yellow) Build(Transform root)
     {
         Floors.Clear();
@@ -60,7 +64,7 @@ public static class LevelBuilder
         level.SetParent(root, false);
 
         BuildShell();
-        BuildRowContent();
+        Layouts[Mathf.Clamp(Current, 0, Layouts.Length - 1)]();
 
         var red = PlayerController.Create("RED", Palette.Red, -1, RespawnPoint(0, -1),
             KeyCode.A, KeyCode.D, KeyCode.W, KeyCode.S, root);
@@ -156,50 +160,4 @@ public static class LevelBuilder
     // Every box has two fixed prizes: one for whoever is CHASING, one for whoever is LEADING.
     static void Box(int row, float x, PowerUpType chaser, PowerUpType leader) =>
         PowerUpBox.Create(new Vector2(x, FloorTop(row) + 0.75f), chaser, leader, level);
-
-    // ---------------- ROW CONTENT ----------------
-    // Keep the ends of each row clear: that's where players land and jump up.
-    // Safe zone for hazards is roughly x = -9 .. 9.
-
-    static void BuildRowContent()
-    {
-        // Row 0 (run right)
-        Spikes(0, -5f, 1f);
-        Lava(0, 3f, 2f);
-        Box(0, -1f, PowerUpType.Fist, PowerUpType.Shield);
-        Box(0, 8f, PowerUpType.Rocket, PowerUpType.Banana);
-
-        // Row 1 (run left)
-        WaterPool(1, 2f, 6f);
-        Saw(1, -7.5f, -3f, 0.4f, 1.1f);
-        Box(1, 7.5f, PowerUpType.FreezeRay, PowerUpType.Banana);
-        Box(1, -9.5f, PowerUpType.SuperJump, PowerUpType.Shield);
-
-        // Row 2 (run right)
-        Lava(2, -5f, 2f);
-        Spikes(2, 2f, 0.8f);
-        Spikes(2, 6f, 0.8f);
-        Box(2, -1.5f, PowerUpType.GravityBomb, PowerUpType.Shield);
-        Box(2, 9f, PowerUpType.Fist, PowerUpType.Banana);
-
-        // Row 3 (run left)
-        Saw(3, 1f, 7f, 0.4f, 0.9f);
-        WaterPool(3, -5.5f, 5f);
-        Box(3, 8.5f, PowerUpType.SuperJump, PowerUpType.Shield);
-        Box(3, -1.5f, PowerUpType.Reverse, PowerUpType.Banana);
-
-        // Row 4 (run right)
-        Spikes(4, -5f, 1f);
-        Lava(4, 1f, 1.8f);
-        Saw(4, 5.5f, 8.5f, 0.4f, 1.0f);
-        Box(4, -8.5f, PowerUpType.FreezeRay, PowerUpType.Shield);
-        Box(4, 4f, PowerUpType.Rocket, PowerUpType.Banana);
-
-        // Row 5 (run left) -> FLAG
-        Lava(5, 4f, 2f);
-        Spikes(5, -2f, 1f);
-        Saw(5, -9f, -6f, 0.4f, 1.2f);
-        Box(5, 8.5f, PowerUpType.Swap, PowerUpType.Shield);
-        Flag.Create(new Vector2(-14f, FloorTop(5)), level);
-    }
 }

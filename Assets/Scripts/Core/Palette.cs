@@ -23,4 +23,15 @@ public static class Palette
     public static readonly Color Ice = new Color(0.65f, 0.92f, 1f, 0.6f);
     public static readonly Color Shield = new Color(0.4f, 0.95f, 1f, 0.3f);
     public static readonly Color Go = new Color(0.35f, 1f, 0.5f);
+
+    // Each lever and its trap share a letter and this color.
+    public static Color Link(string tag) => tag switch
+    {
+        "A" => new Color(0.3f, 0.85f, 1f),
+        "B" => new Color(1f, 0.45f, 0.75f),
+        "C" => new Color(0.6f, 1f, 0.3f),
+        "D" => new Color(1f, 0.65f, 0.2f),
+        "E" => new Color(0.75f, 0.55f, 1f),
+        _ => new Color(0.85f, 0.85f, 0.85f),
+    };
 }

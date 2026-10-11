@@ -40,7 +40,7 @@ public class Banana : MonoBehaviour
     {
         var p = other.GetComponent<PlayerController>();
         if (!p || (p == owner && age < 1f)) return;
-        p.Slip();
+        if (p.Slip() && p != owner) RaceAnalytics.Hit(owner, PowerUpType.Banana);
         Destroy(gameObject);
     }
 }
