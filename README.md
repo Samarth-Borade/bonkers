@@ -1,18 +1,23 @@
 # BONKERS!
 
-**(2D Platformer Race + Place-Based Sabotage)**
-
-A two-player, one-keyboard platform race. Red vs Yellow, one screen, first to the flag wins.
-Hidden **?** boxes hand attacks to whoever is behind and only defence to whoever is ahead,
-so no lead is ever safe and every race stays neck and neck until the flag.
-
-- **Play in the browser:** https://samarth-borade.github.io/bonkers/
-- **Gameplay video:** [link]
-- **Descriptive document:** [`Documentation/Bonkers_Paired_Prototype_Document.docx`](Documentation/Bonkers_Paired_Prototype_Document.docx)
+A two-player, one-keyboard platform race where whoever falls behind gets the weapons
+(attack power-ups and trap levers) while the leader can only defend, so every race stays
+close until the flag.
 
 Made in **Unity 6 (6000.3)**. No external assets: every shape, color and sound is made in code.
+Art is deliberately minimal until the Gold milestone.
 
-![Level diagram](Documentation/images/level_diagram.png)
+## Builds (one link per milestone, never overwritten)
+
+| Milestone | Play | Document |
+|---|---|---|
+| Paired prototype (10/02) | https://samarth-borade.github.io/bonkers/ | [`Documentation/paired/`](Documentation/paired/) |
+| Alpha Progress Check (10/16) | https://samarth-borade.github.io/bonkers/alpha-check/ | [`Documentation/alpha/`](Documentation/alpha/) |
+| Alpha (10/23) | https://samarth-borade.github.io/bonkers/alpha/ | [`Documentation/alpha/`](Documentation/alpha/) |
+| Beta | https://samarth-borade.github.io/bonkers/beta/ | [`Documentation/beta/`](Documentation/beta/) |
+| Gold | https://samarth-borade.github.io/bonkers/gold/ | [`Documentation/gold/`](Documentation/gold/) |
+
+See [VERSIONS.md](VERSIONS.md) for what changed in each milestone and how versions are kept.
 
 ## Controls
 
@@ -21,25 +26,23 @@ Made in **Unity 6 (6000.3)**. No external assets: every shape, color and sound i
 | Move | A / D | Left / Right |
 | Jump (tap again in water to swim) | W | Up |
 | Use power-up | S | Down |
+| Shove / Stomp | run into your rival / land on their head | same |
+| Pull a lever (chaser only) | jump onto its ledge | same |
 
-**Space** start / rematch · **R** restart the round · **Esc** back to the menu
+**Space** start / next race · **R** restart this race · **Esc** back to the menu
 
 ## How it plays
 
-- Run along a row, then jump up through the gap at the end to reach the next one. Six rows, flag at the top.
-- **Lava, spikes, saws**: back to the start of your row. **Water**: slow and floaty.
-- Run into your rival to **shove** them. Land on their head to **STOMP** them.
-- A progress bar and a **LEADING / CHASING** tag always show who is ahead and by how much.
+- **Best of 3:** first to win 2 races wins the match. Each race is on a new level: Classic Climb, Lever Lab, The Gauntlet.
+- Run along a row, then jump up through the gap at its end. Six rows, flag at the top.
+- **Lava, spikes, saws, traps**: back to the start of your row. **Water**: slow and floaty.
+- A progress bar and a **LEADING / CHASING** tag always show who is ahead.
 
-## The twist: place-based ? boxes
+### The twist: the player behind gets the weapons
 
-No dice rolls. Every box has two fixed prizes, and you get one based on your place:
-
-- **Chasing (or level):** an attack or catch-up power.
-- **Leading:** defence only, a Shield or a Banana.
-- Each box works for each player separately (7 s cooldown), so the leader can't take it from you.
-- Every attack can be dodged: jump the punches, run from the drop-bomb's warning beam.
-- After a BONK you're immune for 1.2 s, so nobody gets stun-locked.
+- **Place-based ? boxes.** Every box has two fixed prizes. Chasing (or level): an attack or catch-up power. Leading: defence only. No dice rolls.
+- **Chaser-only levers.** A lever on a small ledge springs its trap (same letter and color) further up the course: a gate to jump or a spike strip. The leader can't use levers.
+- **Every attack can be dodged.** Punches fly along the row; bombs and walls warn first. After a BONK you're immune for 1.2 s.
 
 | Power-up | Who gets it | What it does |
 |---|---|---|
@@ -47,62 +50,66 @@ No dice rolls. Every box has two fixed prizes, and you get one based on your pla
 | Freeze Ray | Chaser | Ice ball: opponent frozen |
 | Gravity Bomb | Chaser | Warning beam, then a bomb drops: heavy, tiny jumps |
 | Brain Scramble | Chaser | Warning beam, then a bomb drops: left/right flipped |
+| Brick Wall | Chaser | A wall pops up in front of the leader |
 | Super Jump | Chaser | Jump up through the floors |
 | Rocket Shoes | Chaser | Run super fast |
+| Ghost | Chaser | Hazards can't hurt you for 3 s |
 | Swaparoo | Chaser (last row) | Swap places with your opponent |
 | Bubble Shield | Leader | Blocks the next attack |
 | Banana Peel | Leader | Drop behind you: whoever steps on it spins out |
+| Fake Box | Leader | A ? box that BONKs the chaser who grabs it |
 
 ## Run it locally
 
 1. Unity Hub → **Add** → pick this folder (Unity 6000.3.x).
 2. It opens `Assets/Scenes/Main.unity` automatically. Press **Play**.
-3. If the scene is missing: menu **Bonkers → Rebuild Main Scene**.
+3. To see a level without playing: **Bonkers → Show Level in Scene View**.
 
 ## Build
 
-- **Bonkers → Build Game (WebGL for GitHub Pages)** writes the web build to `docs/`.
-- **Bonkers → Build Game (Mac / Windows)** writes to `Builds/` (not committed).
+- **Bonkers → Build WebGL → Alpha Progress Check / Alpha / Beta / Gold** writes to `docs/<milestone>/`.
+  It asks before overwriting, because each submission needs its own link.
+- `docs/` itself is the paired prototype as submitted. Don't rebuild it.
+- GitHub Pages: repo **Settings → Pages**, branch `main`, folder `/docs`.
 
-### Hosting on GitHub Pages
+## Analytics
 
-1. Push this repo to GitHub, including the `docs/` folder.
-2. Repo **Settings → Pages → Build and deployment**: Source = *Deploy from a branch*, Branch = `main`, Folder = `/docs`.
-3. After a minute the game is live at `https://<username>.github.io/<repo-name>/`.
+Each finished race sends one row (lead changes, finish gap, power-up hits, deaths by row) to a
+Google Form. Set it up in `Assets/Scripts/Analytics/AnalyticsConfig.cs`, then draw the charts with:
+
+```
+python3 Analytics/visualize.py --csv responses.csv   # or set SHEET_CSV_URL in the script
+python3 Analytics/visualize.py --mock                # made-up data, for GDD mockups
+```
 
 ## Project structure
 
 ```
 Assets/
   Scenes/Main.unity          a Camera + GameManager; the level is built by code at Play
-  Editor/BonkersSetup.cs     "Bonkers" menu: rebuild scene, build Mac / Windows / WebGL
+  Editor/BonkersSetup.cs     "Bonkers" menu: builds per milestone, level preview
   Scripts/
-    Core/                    GameManager (title, countdown, race, win), CameraRig, Palette,
-                             Shapes (makes sprites), Sfx (makes sounds),
+    Core/                    GameManager (match, races), CameraRig, Palette, Shapes, Sfx,
                              DevScreenshots + DevBot (test helpers, only run with a command-line flag)
-    Level/                   LevelBuilder (layout + which prize is in each box), Flag
+    Level/                   LevelBuilder (walls, floors, helpers), LevelLayouts (the 3 levels),
+                             Lever, Trap, Flag
     Player/                  PlayerController (move, jump, shove, stomp, status effects)
-    PowerUps/                PowerUps (what each does), PowerUpBox (place-based prizes),
-                             Projectile, DropStrike, Banana
+    PowerUps/                PowerUps (what each does), PowerUpBox, Projectile, DropStrike, Banana, FakeBox
     Hazards/                 Hazard (lava / spikes), Water, Grinder (saws)
+    Analytics/               RaceAnalytics (counts + sends), AnalyticsConfig (form IDs)
     Effects/                 FX (the "BONK!" text and other pop-up words)
     UI/                      Hud (panels, progress bar, title + win screens)
-docs/                        WebGL build served by GitHub Pages
-Documentation/               descriptive document + diagrams
+Analytics/                   visualize.py + charts/
+docs/                        WebGL builds served by GitHub Pages (one folder per milestone)
+Documentation/               paired/, alpha/, beta/, gold/  (GDD, diagrams, screenshots)
 ```
-
-## Changing things
-
-- **Level layout / box prizes:** `LevelBuilder.BuildRowContent()`, e.g. `Box(2, -1.5f, PowerUpType.GravityBomb, PowerUpType.Shield);`
-- **New power-up:** add it to `PowerUpType`, give it a name and color, add a `case` in `PowerUps.Use()`, put it in a box.
-- **Feel** (speed, jump, gravity): the fields at the top of `PlayerController`.
-- **How far ahead counts as leading:** `LeadMargin` in `GameManager`.
 
 ## Team
 
-| Name | Contributions |
+| Name | GitHub |
 |---|---|
-| Prachi Dave | Player movement and physics (run, jump, swim, shove, stomp), place-based ? box logic, WebGL build and GitHub Pages hosting |
-| Harsh Mangukiya | Level layout and hazards (lava, spikes, rolling saws, water), row-based respawn, jump-distance tuning, level diagram |
-| Samarth Borade | Power-up effects (projectiles, drop-bomb warning, shield, banana, swap), BONK feedback, HUD with progress bar, title and win screens |
-# bonkers
+| Samarth Borade | Samarth-Borade |
+| Harsh Mangukiya | harshmangukiya-usc |
+| Prachi Dave | prachicode-design |
+| Aashwin Singh | Ash-Si |
+| Shivam Bhosle | 007-Shivam |

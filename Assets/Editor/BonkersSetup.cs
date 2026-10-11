@@ -47,15 +47,53 @@ public static class BonkersSetup
     [MenuItem("Bonkers/Build Game (Windows)")]
     public static void BuildWindows() => Build(BuildTarget.StandaloneWindows64, "Builds/Windows/Bonkers.exe");
 
-    // Output goes to /docs so GitHub Pages can serve it straight from the main branch.
-    [MenuItem("Bonkers/Build Game (WebGL for GitHub Pages)")]
-    public static void BuildWebGL()
+    // ---------------- WebGL builds, one folder (and one link) per milestone ----------------
+    // GitHub Pages serves /docs from the main branch:
+    //   docs/              the paired prototype, as submitted. Never rebuild it.
+    //   docs/alpha-check/  https://samarth-borade.github.io/bonkers/alpha-check/
+    //   docs/alpha/        .../alpha/
+    //   docs/beta/         .../beta/
+    //   docs/gold/         .../gold/
+    // The course wants a separate link per submission, so an old build is never overwritten
+    // without asking.
+
+    [MenuItem("Bonkers/Build WebGL/Alpha Progress Check")]
+    public static void BuildAlphaCheck() => BuildWebGL("alpha-check");
+
+    [MenuItem("Bonkers/Build WebGL/Alpha")]
+    public static void BuildAlpha() => BuildWebGL("alpha");
+
+    [MenuItem("Bonkers/Build WebGL/Beta")]
+    public static void BuildBeta() => BuildWebGL("beta");
+
+    [MenuItem("Bonkers/Build WebGL/Gold")]
+    public static void BuildGold() => BuildWebGL("gold");
+
+    // From the command line: -executeMethod BonkersSetup.BuildWebGLFromArgs -milestone alpha-check
+    public static void BuildWebGLFromArgs()
     {
+        var args = System.Environment.GetCommandLineArgs();
+        for (int i = 0; i < args.Length - 1; i++)
+            if (args[i] == "-milestone") { BuildWebGL(args[i + 1]); return; }
+        Debug.LogError("Pass -milestone alpha-check|alpha|beta|gold");
+        EditorApplication.Exit(1);
+    }
+
+    static void BuildWebGL(string milestone)
+    {
+        string path = "docs/" + milestone;
+        if (Directory.Exists(path) && !Application.isBatchMode &&
+            !EditorUtility.DisplayDialog("Overwrite build?",
+                $"{path} already has a build. The course wants each submission to keep its own link.\n\nOverwrite it?",
+                "Overwrite", "Cancel"))
+            return;
+
+        PlayerSettings.bundleVersion = milestone;
         PlayerSettings.WebGL.compressionFormat = WebGLCompressionFormat.Disabled;
         PlayerSettings.WebGL.decompressionFallback = false;
         PlayerSettings.defaultWebScreenWidth = 960;
         PlayerSettings.defaultWebScreenHeight = 540;
-        Build(BuildTarget.WebGL, "docs");
+        Build(BuildTarget.WebGL, path);
         File.WriteAllText("docs/.nojekyll", "");
     }
 
