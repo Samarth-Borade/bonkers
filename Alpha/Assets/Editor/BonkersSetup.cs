@@ -47,14 +47,16 @@ public static class BonkersSetup
     [MenuItem("Bonkers/Build Game (Windows)")]
     public static void BuildWindows() => Build(BuildTarget.StandaloneWindows64, "Builds/Windows/Bonkers.exe");
 
-    // ---------------- WebGL builds, one folder (and one link) per milestone ----------------
-    // GitHub Pages serves /docs from the main branch:
+    // ---------------- WebGL build for this milestone ----------------
+    // This folder is the ALPHA project. Every milestone is its own Unity project
+    // (Alpha/, Beta/, Gold/) and builds into the shared docs/ folder at the repo root,
+    // which GitHub Pages serves:
     //   docs/              the paired prototype, as submitted. Never rebuild it.
     //   docs/alpha-check/  https://samarth-borade.github.io/bonkers/alpha-check/
     //   docs/alpha/        .../alpha/
     //   docs/beta/         .../beta/
     //   docs/gold/         .../gold/
-    // The course wants a separate link per submission, so an old build is never overwritten
+    // The course wants a separate link per submission, so a build is never overwritten
     // without asking.
 
     [MenuItem("Bonkers/Build WebGL/Alpha Progress Check")]
@@ -63,25 +65,19 @@ public static class BonkersSetup
     [MenuItem("Bonkers/Build WebGL/Alpha")]
     public static void BuildAlpha() => BuildWebGL("alpha");
 
-    [MenuItem("Bonkers/Build WebGL/Beta")]
-    public static void BuildBeta() => BuildWebGL("beta");
-
-    [MenuItem("Bonkers/Build WebGL/Gold")]
-    public static void BuildGold() => BuildWebGL("gold");
-
-    // From the command line: -executeMethod BonkersSetup.BuildWebGLFromArgs -milestone alpha-check
+    // From the command line: -executeMethod BonkersSetup.BuildWebGLFromArgs -milestone <name>
     public static void BuildWebGLFromArgs()
     {
         var args = System.Environment.GetCommandLineArgs();
         for (int i = 0; i < args.Length - 1; i++)
             if (args[i] == "-milestone") { BuildWebGL(args[i + 1]); return; }
-        Debug.LogError("Pass -milestone alpha-check|alpha|beta|gold");
+        Debug.LogError("Pass -milestone <name>");
         EditorApplication.Exit(1);
     }
 
     static void BuildWebGL(string milestone)
     {
-        string path = "docs/" + milestone;
+        string path = "../docs/" + milestone;
         if (Directory.Exists(path) && !Application.isBatchMode &&
             !EditorUtility.DisplayDialog("Overwrite build?",
                 $"{path} already has a build. The course wants each submission to keep its own link.\n\nOverwrite it?",
@@ -94,7 +90,7 @@ public static class BonkersSetup
         PlayerSettings.defaultWebScreenWidth = 960;
         PlayerSettings.defaultWebScreenHeight = 540;
         Build(BuildTarget.WebGL, path);
-        File.WriteAllText("docs/.nojekyll", "");
+        File.WriteAllText("../docs/.nojekyll", "");
     }
 
     static void Build(BuildTarget target, string path)

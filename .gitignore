@@ -1,13 +1,13 @@
-# Unity generated
-/[Ll]ibrary/
-/[Tt]emp/
-/[Oo]bj/
-/[Ll]ogs/
-/[Uu]ser[Ss]ettings/
-/[Bb]uild/
-/[Bb]uilds/
-/[Mm]emoryCaptures/
-/[Rr]ecordings/
+# Unity generated (each milestone folder is its own Unity project)
+/*/[Ll]ibrary/
+/*/[Tt]emp/
+/*/[Oo]bj/
+/*/[Ll]ogs/
+/*/[Uu]ser[Ss]ettings/
+/*/[Bb]uild/
+/*/[Bb]uilds/
+/*/[Mm]emoryCaptures/
+/*/[Rr]ecordings/
 
 # IDE / OS
 .vs/
