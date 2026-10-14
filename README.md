@@ -73,12 +73,33 @@ The game's Unity project is in **`Alpha/`**. See [VERSIONS.md](VERSIONS.md) for 
 ## Analytics
 
 Each finished race sends one row (lead changes, finish gap, power-up hits, deaths by row) to a
-Google Form. Set it up in `Assets/Scripts/Analytics/AnalyticsConfig.cs`, then draw the charts with:
+Google Form, which saves it into a Google Sheet. `Analytics/visualize.py` turns the sheet into charts.
+
+| # | Metric | What it tells us | Hypothesis |
+|---|---|---|---|
+| 1 | Lead changes per race | Do races stay close? | Races average at least 3 lead changes |
+| 2 | Finish gap (rows) by level | How close is the finish? | The Gauntlet has a bigger gap than Lever Lab |
+| 3 | Hit rate per attack power-up | Is each attack dodgeable but still worth using? | Gravity Bomb and Brick Wall land 40-70%; Bonk Fist lands less |
+| 4 | Deaths by row and hazard | Where is a level unfair? | Most deaths are on rows 3 and 5 |
+
+### Setting up analytics (once)
+
+1. Make the Google Form and copy its entry IDs into `Alpha/Assets/Scripts/Analytics/AnalyticsConfig.cs`
+   (the steps are in the comment at the top of that file).
+2. Link the form to a Google Sheet, publish the sheet as CSV, and paste the link into
+   `SHEET_CSV_URL` in `Analytics/visualize.py`.
+3. Play one race in a WebGL build and check that a row appears in the sheet.
+
+### Drawing the charts
 
 ```
-python3 Analytics/visualize.py --csv responses.csv   # or set SHEET_CSV_URL in the script
+pip install -r Analytics/requirements.txt
+python3 Analytics/visualize.py                       # reads SHEET_CSV_URL
+python3 Analytics/visualize.py --csv responses.csv   # or a downloaded CSV
 python3 Analytics/visualize.py --mock                # made-up data, for GDD mockups
 ```
+
+Charts are written to `Analytics/charts/`.
 
 ## Project structure
 
@@ -98,7 +119,7 @@ Assets/
     Analytics/               RaceAnalytics (counts + sends), AnalyticsConfig (form IDs)
     Effects/                 FX (the "BONK!" text and other pop-up words)
     UI/                      Hud (panels, progress bar, title + win screens)
-Analytics/                   visualize.py + charts/
+Analytics/                   visualize.py, requirements.txt, charts/
 docs/                        WebGL builds served by GitHub Pages (one folder per milestone)
 Documentation/               paired/, alpha/  (GDD, diagrams, screenshots)
 ```
