@@ -5,19 +5,17 @@ A two-player, one-keyboard platform race where whoever falls behind gets the wea
 close until the flag.
 
 Made in **Unity 6 (6000.3)**. No external assets: every shape, color and sound is made in code.
-Art is deliberately minimal until the Gold milestone.
+Art is deliberately minimal for now.
 
-## Builds (one link per milestone, never overwritten)
+## Builds
 
 | Milestone | Play | Document |
 |---|---|---|
 | Paired prototype (10/02) | https://samarth-borade.github.io/bonkers/ | [`Documentation/paired/`](Documentation/paired/) |
 | Alpha Progress Check (10/16) | https://samarth-borade.github.io/bonkers/alpha-check/ | [`Documentation/alpha/`](Documentation/alpha/) |
 | Alpha (10/23) | https://samarth-borade.github.io/bonkers/alpha/ | [`Documentation/alpha/`](Documentation/alpha/) |
-| Beta | https://samarth-borade.github.io/bonkers/beta/ | [`Documentation/beta/`](Documentation/beta/) |
-| Gold | https://samarth-borade.github.io/bonkers/gold/ | [`Documentation/gold/`](Documentation/gold/) |
 
-See [VERSIONS.md](VERSIONS.md) for what changed in each milestone and how versions are kept.
+The game's Unity project is in **`Alpha/`**. See [VERSIONS.md](VERSIONS.md) for what changed since the paired prototype.
 
 ## Controls
 
@@ -61,13 +59,13 @@ See [VERSIONS.md](VERSIONS.md) for what changed in each milestone and how versio
 
 ## Run it locally
 
-1. Unity Hub → **Add** → pick this folder (Unity 6000.3.x).
+1. Unity Hub → **Add** → pick the `Alpha/` folder (Unity 6000.3.x).
 2. It opens `Assets/Scenes/Main.unity` automatically. Press **Play**.
 3. To see a level without playing: **Bonkers → Show Level in Scene View**.
 
 ## Build
 
-- **Bonkers → Build WebGL → Alpha Progress Check / Alpha / Beta / Gold** writes to `docs/<milestone>/`.
+- **Bonkers → Build WebGL → Alpha Progress Check / Alpha** writes to `docs/<milestone>/` at the repo root.
   It asks before overwriting, because each submission needs its own link.
 - `docs/` itself is the paired prototype as submitted. Don't rebuild it.
 - GitHub Pages: repo **Settings → Pages**, branch `main`, folder `/docs`.
@@ -85,6 +83,7 @@ python3 Analytics/visualize.py --mock                # made-up data, for GDD moc
 ## Project structure
 
 ```
+Alpha/                       the Unity project:
 Assets/
   Scenes/Main.unity          a Camera + GameManager; the level is built by code at Play
   Editor/BonkersSetup.cs     "Bonkers" menu: builds per milestone, level preview
@@ -101,7 +100,7 @@ Assets/
     UI/                      Hud (panels, progress bar, title + win screens)
 Analytics/                   visualize.py + charts/
 docs/                        WebGL builds served by GitHub Pages (one folder per milestone)
-Documentation/               paired/, alpha/, beta/, gold/  (GDD, diagrams, screenshots)
+Documentation/               paired/, alpha/  (GDD, diagrams, screenshots)
 ```
 
 ## Team

@@ -47,15 +47,11 @@ public static class BonkersSetup
     [MenuItem("Bonkers/Build Game (Windows)")]
     public static void BuildWindows() => Build(BuildTarget.StandaloneWindows64, "Builds/Windows/Bonkers.exe");
 
-    // ---------------- WebGL build for this milestone ----------------
-    // This folder is the ALPHA project. Every milestone is its own Unity project
-    // (Alpha/, Beta/, Gold/) and builds into the shared docs/ folder at the repo root,
-    // which GitHub Pages serves:
+    // ---------------- WebGL builds, one folder (and one link) per submission ----------------
+    // Builds go into the docs/ folder at the repo root, which GitHub Pages serves:
     //   docs/              the paired prototype, as submitted. Never rebuild it.
     //   docs/alpha-check/  https://samarth-borade.github.io/bonkers/alpha-check/
-    //   docs/alpha/        .../alpha/
-    //   docs/beta/         .../beta/
-    //   docs/gold/         .../gold/
+    //   docs/alpha/        https://samarth-borade.github.io/bonkers/alpha/
     // The course wants a separate link per submission, so a build is never overwritten
     // without asking.
 
