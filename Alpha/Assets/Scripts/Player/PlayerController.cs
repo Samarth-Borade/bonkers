@@ -23,6 +23,25 @@ public class PlayerController : MonoBehaviour
     public float gravity = 3f;
     public float maxFall = 22f;
 
+    // A BONK or a trap should feel like the rival's doing, never the controls.
+    // These are the numbers that decide that, so they live in the Inspector
+    // where we can tune them during a playtest instead of recompiling.
+    [Header("Feel: forgiving jump")]
+    [Tooltip("Grace period after stepping off a ledge where a jump still counts.")]
+    public float coyoteTime = 0.1f;
+    [Tooltip("How early a jump press is remembered and fired once you land.")]
+    public float jumpBufferTime = 0.12f;
+    [Tooltip("Extra gravity while rising with jump released, so taps give short hops.")]
+    public float lowJumpGravityMul = 1.8f;
+
+    [Header("Feel: contact")]
+    public float stompBounce = 12f;
+    public float shoveForce = 8f;
+    public float shoveCooldown = 0.45f;
+    public float shoveDecay = 22f;
+    public float bonkKnockback = 9f;
+    public float bonkInvuln = 1.2f;
+
     public PowerUpType Held { get; set; } = PowerUpType.None;
     public int Facing { get; private set; } = 1;
     public int Row { get; private set; }
@@ -100,7 +119,7 @@ public class PlayerController : MonoBehaviour
             if (reverseT > 0) moveInput = -moveInput;
             if (moveInput != 0) Facing = moveInput > 0 ? 1 : -1;
 
-            if (KeyDown(jumpKey)) bufferT = 0.12f;
+            if (KeyDown(jumpKey)) bufferT = jumpBufferTime;
             jumpHeld = KeyHeld(jumpKey);
             if (KeyDown(useKey)) PowerUps.Use(this);
         }
@@ -124,7 +143,7 @@ public class PlayerController : MonoBehaviour
         grounded = CheckGround(out var standingOn);
         if (grounded)
         {
-            coyoteT = 0.1f;
+            coyoteT = coyoteTime;
             if (!standingOn) Row = LevelBuilder.RowFromY(transform.position.y);
         }
         else coyoteT -= dt;
@@ -137,7 +156,7 @@ public class PlayerController : MonoBehaviour
         if (InWater) speedMul *= 0.6f;
 
         controlVx = Mathf.MoveTowards(controlVx, moveInput * moveSpeed * speedMul, (grounded ? groundAccel : airAccel) * dt);
-        pushVx = Mathf.MoveTowards(pushVx, 0f, 22f * dt);
+        pushVx = Mathf.MoveTowards(pushVx, 0f, shoveDecay * dt);
 
         var v = rb.linearVelocity;
         v.x = controlVx + pushVx;
@@ -157,7 +176,7 @@ public class PlayerController : MonoBehaviour
         float g = gravity;
         if (heavyT > 0) g *= 2f;
         if (InWater) g *= 0.3f;
-        else if (!jumpHeld && v.y > 0) g *= 1.8f; // let go of jump early = shorter hop
+        else if (!jumpHeld && v.y > 0) g *= lowJumpGravityMul; // let go of jump early = shorter hop
         rb.gravityScale = g;
 
         float fallCap = InWater ? 3.5f : maxFall;
@@ -222,7 +241,7 @@ public class PlayerController : MonoBehaviour
         {
             if (other.Bonk(this, 1.5f, "STOMPED!")) RaceAnalytics.Stomp(this);
             var v = rb.linearVelocity;
-            v.y = 12f;
+            v.y = stompBounce;
             rb.linearVelocity = v;
         }
     }
@@ -237,8 +256,8 @@ public class PlayerController : MonoBehaviour
         if (Mathf.Abs(other.transform.position.y - transform.position.y) > 0.5f) return;
         if (Mathf.Sign(dx) != Mathf.Sign(moveInput)) return;
 
-        other.Shove(Mathf.Sign(dx) * 8f);
-        pushCooldown = 0.45f;
+        other.Shove(Mathf.Sign(dx) * shoveForce);
+        pushCooldown = shoveCooldown;
         Sfx.Play(Sfx.Shove, 0.7f);
     }
 
@@ -270,11 +289,11 @@ public class PlayerController : MonoBehaviour
     public bool Bonk(PlayerController attacker, float slowFor, string word)
     {
         if (invulnT > 0 || Blocks()) return false;
-        invulnT = 1.2f; // grace period so nobody gets stun-locked
+        invulnT = bonkInvuln; // grace period so nobody gets stun-locked
         slowT = Mathf.Max(slowT, slowFor);
 
         float dir = attacker ? Mathf.Sign(transform.position.x - attacker.transform.position.x) : Facing;
-        pushVx = dir * 9f;
+        pushVx = dir * bonkKnockback;
         var v = rb.linearVelocity;
         v.y = Mathf.Max(v.y, 6f);
         rb.linearVelocity = v;
@@ -307,6 +326,7 @@ public class PlayerController : MonoBehaviour
         transform.position = LevelBuilder.RespawnPoint(Row, spawnSide);
         rb.linearVelocity = Vector2.zero;
         controlVx = pushVx = 0;
+        bufferT = coyoteT = 0; // a jump pressed as you died must not fire on respawn
         safeT = 1.5f;
         stunT = Mathf.Max(stunT, 0.35f);
         freezeT = 0;
@@ -320,6 +340,7 @@ public class PlayerController : MonoBehaviour
         transform.position = pos;
         rb.linearVelocity = Vector2.zero;
         controlVx = pushVx = 0;
+        bufferT = coyoteT = 0; // Swap must not hand you a free jump at the far end
         Row = row;
         waterCount = 0;
     }
