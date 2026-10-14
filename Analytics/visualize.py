@@ -1,7 +1,7 @@
 """
 BONKERS! analytics -> charts.
 
-Every finished race sends one row to our Google Form (see Assets/Scripts/Analytics/).
+Every finished race sends one row to our Google Form (see Alpha/Assets/Scripts/Analytics/).
 The form saves rows into a Google Sheet. This script reads that sheet and draws one
 chart per metric into Analytics/charts/.
 
@@ -13,7 +13,7 @@ Usage:
 To get SHEET_CSV_URL: in the response sheet, File -> Share -> Publish to web ->
 pick the sheet, format "Comma-separated values (.csv)" -> Publish, and paste the link.
 
-Needs: pip install pandas matplotlib
+Needs: pip install -r Analytics/requirements.txt
 """
 import argparse
 import os
@@ -24,16 +24,29 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pandas as pd
 
-SHEET_CSV_URL = ""  # paste the published CSV link here
+SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTM8VB75PBF_pMHWLvSckpN9oGnv8yzutwRKOzSfVSZ5poY6FHzXQHJ2k16jOiIZMDWyFE56vNaIGoR/pub?gid=830941285&single=true&output=csv"
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "charts")
 
+# Same names, same order as the questions in the Google Form (see AnalyticsConfig.cs).
 COLUMNS = ["session", "build", "level", "round", "winner", "race_time", "lead_changes",
            "finish_gap", "deaths", "powerups_used", "powerup_hits", "levers", "stomps"]
 
+# Chart look
+SIZE = (6, 3.6)
+WIDE_SIZE = (6.5, 3.6)
+LEAD_COLOR = "#4C9BE8"
+GAP_COLOR = "#F28E2B"
+HIT_COLOR = "#59A14F"
+HAZARD_COLORS = {"SPIKED": "#BAB0AC", "TOASTED": "#E15759", "GROUND UP": "#76B7B2", "TRAPPED": "#B07AA1"}
+OTHER_COLOR = "#999"
 
-def parse_counts(cell):
+# Power-ups you don't aim at the rival, so they have no hit rate
+NOT_AIMED = ("Shield", "SuperJump", "Rocket", "Ghost")
+
+
+def parse_counts(cell: object) -> dict[str, int]:
     """'Fist=2;Ghost=1' -> {'Fist': 2, 'Ghost': 1}"""
     out = {}
     if isinstance(cell, str):
@@ -44,7 +57,8 @@ def parse_counts(cell):
     return out
 
 
-def load(args):
+def load(args: argparse.Namespace) -> pd.DataFrame:
+    """Race rows from --mock, --csv, or the published sheet, in that order."""
     if args.mock:
         return mock_data()
     src = args.csv or SHEET_CSV_URL
@@ -55,7 +69,7 @@ def load(args):
     return df
 
 
-def mock_data(n=40):
+def mock_data(n: int = 40) -> pd.DataFrame:
     """Plausible fake races, only used to sketch the charts in the GDD."""
     random.seed(7)
     rows = []
@@ -87,9 +101,10 @@ def mock_data(n=40):
     return pd.DataFrame(rows, columns=COLUMNS)
 
 
-def save(fig, name, mock):
+def save(fig: plt.Figure, name: str, mock: bool) -> None:
+    """Write the chart to Analytics/charts/, stamped as a mockup if the data is fake."""
     if mock:
-        fig.text(0.99, 0.01, "MOCKUP - made-up data", ha="right", va="bottom", fontsize=8, color="#999")
+        fig.text(0.99, 0.01, "MOCKUP - made-up data", ha="right", va="bottom", fontsize=8, color=OTHER_COLOR)
     fig.tight_layout()
     path = os.path.join(OUT, name)
     fig.savefig(path, dpi=150)
@@ -97,37 +112,42 @@ def save(fig, name, mock):
     print("wrote", path)
 
 
-def chart_lead_changes(df, mock):
-    fig, ax = plt.subplots(figsize=(6, 3.6))
+def chart_lead_changes(df: pd.DataFrame, mock: bool) -> None:
+    """Metric 1: how many races had 0, 1, 2... lead changes.
+    Hypothesis: races average at least 3."""
+    fig, ax = plt.subplots(figsize=SIZE)
     counts = df["lead_changes"].astype(int).value_counts().sort_index()
-    ax.bar(counts.index.astype(str), counts.values, color="#4C9BE8")
+    ax.bar(counts.index.astype(str), counts.values, color=LEAD_COLOR)
     ax.set_title("Metric 1: Lead changes per race")
     ax.set_xlabel("Times the lead changed hands")
     ax.set_ylabel("Number of races")
     save(fig, "metric1_lead_changes.png", mock)
 
 
-def chart_finish_gap(df, mock):
-    fig, ax = plt.subplots(figsize=(6, 3.6))
+def chart_finish_gap(df: pd.DataFrame, mock: bool) -> None:
+    """Metric 2: average gap (in rows) at the flag, per level.
+    Hypothesis: The Gauntlet (level 3) has a larger gap than Lever Lab (level 2)."""
+    fig, ax = plt.subplots(figsize=SIZE)
     means = df.groupby("level")["finish_gap"].mean()
-    ax.bar([f"Level {int(l)}" for l in means.index], means.values, color="#F28E2B")
+    ax.bar([f"Level {int(l)}" for l in means.index], means.values, color=GAP_COLOR)
     ax.set_title("Metric 2: Average finish gap by level")
     ax.set_ylabel("Gap at the flag (rows)")
     save(fig, "metric2_finish_gap.png", mock)
 
 
-def chart_powerups(df, mock):
+def chart_powerups(df: pd.DataFrame, mock: bool) -> None:
+    """Metric 3: % of uses that hit, per aimed power-up.
+    Hypothesis: Gravity Bomb and Brick Wall land 40-70%; Bonk Fist lands less."""
     used, hits = {}, {}
     for _, r in df.iterrows():
         for k, v in parse_counts(r["powerups_used"]).items():
             used[k] = used.get(k, 0) + v
         for k, v in parse_counts(r["powerup_hits"]).items():
             hits[k] = hits.get(k, 0) + v
-    # only things you aim at someone have a hit rate
-    names = [k for k in sorted(used) if k not in ("Shield", "SuperJump", "Rocket", "Ghost")]
+    names = [k for k in sorted(used) if k not in NOT_AIMED]
     rate = [100 * hits.get(k, 0) / used[k] for k in names]
-    fig, ax = plt.subplots(figsize=(6.5, 3.6))
-    ax.bar(names, rate, color="#59A14F")
+    fig, ax = plt.subplots(figsize=WIDE_SIZE)
+    ax.bar(names, rate, color=HIT_COLOR)
     ax.set_title("Metric 3: Hit rate per attack power-up")
     ax.set_ylabel("% of uses that hit")
     ax.set_ylim(0, 100)
@@ -135,7 +155,9 @@ def chart_powerups(df, mock):
     save(fig, "metric3_powerup_hit_rate.png", mock)
 
 
-def chart_deaths(df, mock):
+def chart_deaths(df: pd.DataFrame, mock: bool) -> None:
+    """Metric 4: deaths per row, stacked by hazard.
+    Hypothesis: most deaths are on rows 3 and 5, where saws and traps overlap."""
     table = {}
     for _, r in df.iterrows():
         for k, v in parse_counts(r["deaths"]).items():
@@ -143,13 +165,12 @@ def chart_deaths(df, mock):
             table.setdefault(hazard, {})
             table[hazard][row] = table[hazard].get(row, 0) + v
     rows = [f"row{i}" for i in range(1, 7)]
-    fig, ax = plt.subplots(figsize=(6.5, 3.6))
+    fig, ax = plt.subplots(figsize=WIDE_SIZE)
     bottom = [0] * len(rows)
-    colors = {"SPIKED": "#BAB0AC", "TOASTED": "#E15759", "GROUND UP": "#76B7B2", "TRAPPED": "#B07AA1"}
     for hazard, per_row in sorted(table.items()):
         vals = [per_row.get(r, 0) for r in rows]
         ax.bar([r.replace("row", "Row ") for r in rows], vals, bottom=bottom, label=hazard.title(),
-               color=colors.get(hazard, "#999"))
+               color=HAZARD_COLORS.get(hazard, OTHER_COLOR))
         bottom = [b + v for b, v in zip(bottom, vals)]
     ax.set_title("Metric 4: Deaths by row and hazard")
     ax.set_ylabel("Deaths")
@@ -157,7 +178,7 @@ def chart_deaths(df, mock):
     save(fig, "metric4_deaths_by_row.png", mock)
 
 
-def main():
+def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--csv")
     ap.add_argument("--mock", action="store_true")
