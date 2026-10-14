@@ -23,6 +23,31 @@ public class PlayerController : MonoBehaviour
     public float gravity = 3f;
     public float maxFall = 22f;
 
+    // A BONK or a trap should feel like the rival's doing, never the controls.
+    // These are the numbers that decide that, so they live in the Inspector
+    // where we can tune them during a playtest instead of recompiling.
+    [Header("Feel: forgiving jump")]
+    [Tooltip("Grace period after stepping off a ledge where a jump still counts.")]
+    public float coyoteTime = 0.1f;
+    [Tooltip("How early a jump press is remembered and fired once you land.")]
+    public float jumpBufferTime = 0.12f;
+    [Tooltip("Extra gravity while rising with jump released, so taps give short hops.")]
+    public float lowJumpGravityMul = 1.8f;
+    [Tooltip("Just past the peak, while falling slower than this, gravity eases off so you " +
+             "float for a beat and get longer to steer over a saw. Downward side only, so it " +
+             "never changes how high you can reach.")]
+    public float apexHangSpeed = 4f;
+    [Range(0.2f, 1f)]
+    public float apexHangGravityMul = 0.55f;
+
+    [Header("Feel: contact")]
+    public float stompBounce = 12f;
+    public float shoveForce = 8f;
+    public float shoveCooldown = 0.45f;
+    public float shoveDecay = 22f;
+    public float bonkKnockback = 9f;
+    public float bonkInvuln = 1.2f;
+
     public PowerUpType Held { get; set; } = PowerUpType.None;
     public int Facing { get; private set; } = 1;
     public int Row { get; private set; }
@@ -57,6 +82,7 @@ public class PlayerController : MonoBehaviour
         p.spawnSide = side;
         p.leftKey = left; p.rightKey = right; p.jumpKey = jump; p.useKey = use;
         p.BuildBody();
+        p.WarnIfJumpReachIsWrong(); // players are built in code, so OnValidate never sees them
         return p;
     }
 
@@ -100,7 +126,7 @@ public class PlayerController : MonoBehaviour
             if (reverseT > 0) moveInput = -moveInput;
             if (moveInput != 0) Facing = moveInput > 0 ? 1 : -1;
 
-            if (KeyDown(jumpKey)) bufferT = 0.12f;
+            if (KeyDown(jumpKey)) bufferT = jumpBufferTime;
             jumpHeld = KeyHeld(jumpKey);
             if (KeyDown(useKey)) PowerUps.Use(this);
         }
@@ -124,7 +150,7 @@ public class PlayerController : MonoBehaviour
         grounded = CheckGround(out var standingOn);
         if (grounded)
         {
-            coyoteT = 0.1f;
+            coyoteT = coyoteTime;
             if (!standingOn) Row = LevelBuilder.RowFromY(transform.position.y);
         }
         else coyoteT -= dt;
@@ -137,7 +163,7 @@ public class PlayerController : MonoBehaviour
         if (InWater) speedMul *= 0.6f;
 
         controlVx = Mathf.MoveTowards(controlVx, moveInput * moveSpeed * speedMul, (grounded ? groundAccel : airAccel) * dt);
-        pushVx = Mathf.MoveTowards(pushVx, 0f, 22f * dt);
+        pushVx = Mathf.MoveTowards(pushVx, 0f, shoveDecay * dt);
 
         var v = rb.linearVelocity;
         v.x = controlVx + pushVx;
@@ -157,7 +183,10 @@ public class PlayerController : MonoBehaviour
         float g = gravity;
         if (heavyT > 0) g *= 2f;
         if (InWater) g *= 0.3f;
-        else if (!jumpHeld && v.y > 0) g *= 1.8f; // let go of jump early = shorter hop
+        else if (!jumpHeld && v.y > 0) g *= lowJumpGravityMul; // let go of jump early = shorter hop
+        // Hang a beat at the top of the arc. Only once you are already falling, so the peak
+        // itself is untouched. Heavy keeps its dead drop.
+        else if (heavyT <= 0 && v.y <= 0f && v.y > -apexHangSpeed) g *= apexHangGravityMul;
         rb.gravityScale = g;
 
         float fallCap = InWater ? 3.5f : maxFall;
@@ -222,7 +251,7 @@ public class PlayerController : MonoBehaviour
         {
             if (other.Bonk(this, 1.5f, "STOMPED!")) RaceAnalytics.Stomp(this);
             var v = rb.linearVelocity;
-            v.y = 12f;
+            v.y = stompBounce;
             rb.linearVelocity = v;
         }
     }
@@ -237,8 +266,8 @@ public class PlayerController : MonoBehaviour
         if (Mathf.Abs(other.transform.position.y - transform.position.y) > 0.5f) return;
         if (Mathf.Sign(dx) != Mathf.Sign(moveInput)) return;
 
-        other.Shove(Mathf.Sign(dx) * 8f);
-        pushCooldown = 0.45f;
+        other.Shove(Mathf.Sign(dx) * shoveForce);
+        pushCooldown = shoveCooldown;
         Sfx.Play(Sfx.Shove, 0.7f);
     }
 
@@ -270,11 +299,11 @@ public class PlayerController : MonoBehaviour
     public bool Bonk(PlayerController attacker, float slowFor, string word)
     {
         if (invulnT > 0 || Blocks()) return false;
-        invulnT = 1.2f; // grace period so nobody gets stun-locked
+        invulnT = bonkInvuln; // grace period so nobody gets stun-locked
         slowT = Mathf.Max(slowT, slowFor);
 
         float dir = attacker ? Mathf.Sign(transform.position.x - attacker.transform.position.x) : Facing;
-        pushVx = dir * 9f;
+        pushVx = dir * bonkKnockback;
         var v = rb.linearVelocity;
         v.y = Mathf.Max(v.y, 6f);
         rb.linearVelocity = v;
@@ -307,6 +336,7 @@ public class PlayerController : MonoBehaviour
         transform.position = LevelBuilder.RespawnPoint(Row, spawnSide);
         rb.linearVelocity = Vector2.zero;
         controlVx = pushVx = 0;
+        bufferT = coyoteT = 0; // a jump pressed as you died must not fire on respawn
         safeT = 1.5f;
         stunT = Mathf.Max(stunT, 0.35f);
         freezeT = 0;
@@ -320,6 +350,7 @@ public class PlayerController : MonoBehaviour
         transform.position = pos;
         rb.linearVelocity = Vector2.zero;
         controlVx = pushVx = 0;
+        bufferT = coyoteT = 0; // Swap must not hand you a free jump at the far end
         Row = row;
         waterCount = 0;
     }
@@ -330,6 +361,43 @@ public class PlayerController : MonoBehaviour
     public void ExitWater() { waterCount = Mathf.Max(0, waterCount - 1); }
 
     public Vector2 Head => (Vector2)transform.position + Vector2.up * 0.9f;
+
+    // ---------------- design guard: one jump, one row ----------------
+
+    // The zig-zag climb only works if a jump clears exactly one row: high enough to
+    // reach the next floor, never high enough to skip one. Until now that was true only
+    // because the numbers happened to work out -- a nudge to jumpVelocity or gravity
+    // could have quietly broken the level design with nothing to catch it.
+    // Super Jump is the deliberate exception: it passes through floors and is capped
+    // at the rival's row in UpdateGhost().
+    public float MaxJumpHeight(float jumpMul = 1f)
+    {
+        float a = Mathf.Abs(Physics2D.gravity.y) * gravity;
+        if (a <= 0f) return float.PositiveInfinity;
+        float v0 = jumpVelocity * jumpMul;
+        return v0 * v0 / (2f * a);
+    }
+
+    // Null when the tuning is sane, otherwise what is wrong with it.
+    public string CheckJumpReach()
+    {
+        float h = MaxJumpHeight();
+        float row = LevelBuilder.RowHeight;
+        if (h < row)
+            return $"a jump reaches {h:0.00} but a row is {row:0.00} tall: the climb is impossible.";
+        if (h >= row * 2f)
+            return $"a jump reaches {h:0.00} and clears two rows ({row * 2f:0.00}): the climb can be skipped.";
+        return null;
+    }
+
+    [System.Diagnostics.Conditional("UNITY_EDITOR")]
+    void WarnIfJumpReachIsWrong()
+    {
+        string problem = CheckJumpReach();
+        if (problem != null) Debug.LogWarning($"[Feel] {displayName}: {problem}", this);
+    }
+
+    void OnValidate() => WarnIfJumpReachIsWrong();
 
     // ---------------- looks ----------------
 
