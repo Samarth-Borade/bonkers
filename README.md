@@ -57,6 +57,9 @@ The game's Unity project is in **`Alpha/`**. See [VERSIONS.md](VERSIONS.md) for 
 | Banana Peel | Leader | Drop behind you: whoever steps on it spins out |
 | Fake Box | Leader | A ? box that BONKs the chaser who grabs it |
 
+Every duration, speed and "what counts as a hit" is in
+[`Documentation/alpha/powerup_reference.md`](Documentation/alpha/powerup_reference.md).
+
 ## Run it locally
 
 1. Unity Hub → **Add** → pick the `Alpha/` folder (Unity 6000.3.x).
@@ -123,7 +126,7 @@ Assets/
 Analytics/                   visualize.py, requirements.txt, charts/
 docs/                        WebGL builds served by GitHub Pages (one folder per milestone)
 Documentation/               paired/, alpha/  (GDD, diagrams, screenshots,
-                             level_design.md, playtest_notes_template.md)
+                             level_design.md, powerup_reference.md, playtest_notes_template.md)
 ```
 
 ## Team
