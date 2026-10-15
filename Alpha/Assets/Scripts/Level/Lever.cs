@@ -9,6 +9,8 @@ public class Lever : MonoBehaviour
     const float LedgeHeight = 1.0f;   // underside of the ledge: you can walk under it
     const float LedgeThickness = 0.2f;
     const float LedgeWidth = 1.4f;
+    const float NagInterval = 1.5f;   // how often a leader touching the lever sees "CHASERS ONLY"
+    const float RechargingAlpha = 0.25f;   // handle opacity while on cooldown
 
     Trap[] traps;
     string tag_;
@@ -49,7 +51,7 @@ public class Lever : MonoBehaviour
     void Update()
     {
         // Dim the handle while it's recharging.
-        handle.color = Time.time >= readyAt ? color : new Color(color.r, color.g, color.b, 0.25f);
+        handle.color = Time.time >= readyAt ? color : new Color(color.r, color.g, color.b, RechargingAlpha);
     }
 
     void OnTriggerEnter2D(Collider2D other) => TryPull(other);
@@ -63,7 +65,7 @@ public class Lever : MonoBehaviour
 
         if (gm.IsLeading(p))
         {
-            if (Time.time - lastNagAt > 1.5f)
+            if (Time.time - lastNagAt > NagInterval)
             {
                 lastNagAt = Time.time;
                 FX.Pop("CHASERS ONLY", p.Head, Color.white, 0.45f);
