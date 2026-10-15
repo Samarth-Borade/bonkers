@@ -35,6 +35,18 @@ These are from the header of `LevelLayouts.cs`, plus what earlier test runs taug
 4. **A lever and its trap share a letter and a color**, and the trap is always further up the course.
 5. **Only the chaser can pull a lever** (8 s cooldown), so levers are a catch-up tool, never a leader's weapon.
 
+### Lever and trap timings
+
+| | Value | In code |
+|---|---|---|
+| Lever cooldown | 8 s | `Lever.Cooldown` |
+| Trap warning (outline flashes) | 0.6 s | `Trap.WarnTime` |
+| Trap active | 3.5 s | `Trap.ActiveTime` |
+| Gate size | 0.5 wide, 1.2 high | `Trap.GateWidth`, `Trap.GateHeight` |
+| Lever ledge | 1.4 wide, underside 1.0 above the floor | `Lever.LedgeWidth`, `Lever.LedgeHeight` |
+
+A trap springs 0.6 s after the pull, so a leader right on top of it still gets a moment to react.
+
 ## At a glance
 
 | | Classic Climb | Lever Lab | The Gauntlet |
