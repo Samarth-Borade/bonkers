@@ -157,7 +157,7 @@ public static partial class LevelBuilder
     // ---------------- lever + trap helpers ----------------
 
     static Trap GateTrap(int row, float x, string tag) =>
-        Trap.Create(Trap.Kind.Gate, new Vector2(x, FloorTop(row)), 0.5f, tag, level);
+        Trap.Create(Trap.Kind.Gate, new Vector2(x, FloorTop(row)), Trap.GateWidth, tag, level);
 
     static Trap SpikeTrap(int row, float x, float width, string tag) =>
         Trap.Create(Trap.Kind.Spikes, new Vector2(x, FloorTop(row)), width, tag, level);
