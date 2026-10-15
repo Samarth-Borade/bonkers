@@ -10,8 +10,16 @@ using UnityEngine.Networking;
 //   2. Finish gap (in rows)         -> how close was the end?
 //   3. Power-up use vs. hits        -> which power-ups land, which get dodged?
 //   4. Deaths by hazard and row     -> where is the level too hard?
+//
+// The deaths, powerups_used and powerup_hits columns pack several counts into one cell,
+// as key=count pairs joined by ';' and sorted by key:
+//   deaths         row3:SPIKED=2;row5:TOASTED=1    (row 1-6 : the hazard's pop-up word without '!')
+//   powerups_used  Fist=2;GravityBomb=1            (PowerUpType names)
+//   powerup_hits   Fist=1                          (same names; a use that missed has no hit)
+// Analytics/visualize.py unpacks them with parse_counts().
 public static class RaceAnalytics
 {
+    // One id per page load, so races played in the same sitting can be grouped.
     static readonly string SessionId = System.Guid.NewGuid().ToString("N").Substring(0, 8);
 
     static int leadChanges, lastLeader, levers, stomps;
@@ -19,8 +27,10 @@ public static class RaceAnalytics
     static readonly Dictionary<string, int> used = new Dictionary<string, int>();
     static readonly Dictionary<string, int> hits = new Dictionary<string, int>();
 
+    /// <summary>Lead changes so far in the current race.</summary>
     public static int LeadChanges => leadChanges;
 
+    /// <summary>Clears all counts. Called by GameManager when the countdown hits GO.</summary>
     public static void BeginRace()
     {
         leadChanges = lastLeader = levers = stomps = 0;
@@ -29,7 +39,10 @@ public static class RaceAnalytics
         hits.Clear();
     }
 
-    // Called every frame during the race: 0 = neck and neck, 1 = Red ahead, 2 = Yellow ahead.
+    /// <summary>
+    /// Called every frame during the race: 0 = neck and neck, 1 = Red ahead, 2 = Yellow ahead.
+    /// A tie doesn't count as a change, so Red -> tie -> Red is still 0 changes.
+    /// </summary>
     public static void TrackLeader(int leader)
     {
         if (leader == 0) return;
@@ -37,16 +50,26 @@ public static class RaceAnalytics
         lastLeader = leader;
     }
 
+    /// <summary>A player died on their current row. Called by PlayerController with the hazard's pop-up word.</summary>
     public static void Death(PlayerController p, string word) => Add(deaths, $"row{p.Row + 1}:{word.TrimEnd('!')}");
+    /// <summary>A power-up was used. Called by PowerUps when the player presses the power key.</summary>
     public static void PowerUpUsed(PlayerController p, PowerUpType t) => Add(used, t.ToString());
+    /// <summary>A power-up landed on the rival. Called from the power-up's hit callback (PowerUps, Banana, FakeBox).</summary>
     public static void Hit(PlayerController attacker, PowerUpType t) => Add(hits, t.ToString());
+    /// <summary>The chaser pulled a lever. Called by Lever.</summary>
     public static void LeverPulled(PlayerController p) => levers++;
+    /// <summary>A player stomped the rival's head. Called by PlayerController.</summary>
     public static void Stomp(PlayerController p) => stomps++;
 
     static void Add(Dictionary<string, int> d, string key) => d[key] = d.TryGetValue(key, out var n) ? n + 1 : 1;
 
     static string Flat(Dictionary<string, int> d) => string.Join(";", d.OrderBy(kv => kv.Key).Select(kv => $"{kv.Key}={kv.Value}"));
 
+    /// <summary>
+    /// Sends the race's summary row. Called by GameManager.Win.
+    /// level and round are 0-based here and sent 1-based. finishGap is how many rows
+    /// the loser still had to climb when the winner touched the flag.
+    /// </summary>
     public static void EndRace(MonoBehaviour host, int level, int round, string winner, float raceTime, float finishGap)
     {
         var row = new Dictionary<string, string>
