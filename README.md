@@ -62,6 +62,7 @@ The game's Unity project is in **`Alpha/`**. See [VERSIONS.md](VERSIONS.md) for 
 1. Unity Hub → **Add** → pick the `Alpha/` folder (Unity 6000.3.x).
 2. It opens `Assets/Scenes/Main.unity` automatically. Press **Play**.
 3. To see a level without playing: **Bonkers → Show Level in Scene View**.
+   Every row of every level is listed in [`Documentation/alpha/level_design.md`](Documentation/alpha/level_design.md).
 
 ## Build
 
@@ -121,7 +122,8 @@ Assets/
     UI/                      Hud (panels, progress bar, title + win screens)
 Analytics/                   visualize.py, requirements.txt, charts/
 docs/                        WebGL builds served by GitHub Pages (one folder per milestone)
-Documentation/               paired/, alpha/  (GDD, diagrams, screenshots)
+Documentation/               paired/, alpha/  (GDD, diagrams, screenshots,
+                             level_design.md, playtest_notes_template.md)
 ```
 
 ## Team

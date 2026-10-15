@@ -12,6 +12,7 @@ public class Trap : MonoBehaviour
     public const float ActiveTime = 3.5f;
 
     public const float GateHeight = 1.2f;
+    public const float GateWidth = 0.5f;   // lever gates; Brick Wall passes its own width
 
     Kind kind;
     Color color;
