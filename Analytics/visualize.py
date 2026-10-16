@@ -108,6 +108,7 @@ def clean(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     for col in NUMBER_COLUMNS:
         df[col] = pd.to_numeric(df[col], errors="coerce")
+    df[NUMBER_COLUMNS] = df[NUMBER_COLUMNS].replace([float("inf"), float("-inf")], float("nan"))
     return df
 
 

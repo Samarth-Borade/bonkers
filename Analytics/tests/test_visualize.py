@@ -168,8 +168,9 @@ def test_mock_hits_never_exceed_uses_and_death_keys_are_valid():
 
 def powerup_names() -> set:
     src = (SCRIPTS / "PowerUps" / "PowerUps.cs").read_text(encoding="utf-8-sig")
+    src = re.sub(r"/\*.*?\*/", "", src, flags=re.S)
+    src = re.sub(r"//[^\n]*", "", src)
     body = re.search(r"enum\s+PowerUpType\b[^{]*\{(.*?)\}", src, re.S).group(1)
-    body = re.sub(r"//.*|/\*.*?\*/", "", body, flags=re.S)
     return {m.group(1) for part in body.split(",") if (m := re.match(r"\s*(\w+)", part))}
 
 
