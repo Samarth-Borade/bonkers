@@ -26,3 +26,8 @@
 *.VC.db
 .DS_Store
 
+
+# Python (Analytics/)
+__pycache__/
+.pytest_cache/
+.venv/

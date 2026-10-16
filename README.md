@@ -57,6 +57,9 @@ The game's Unity project is in **`Alpha/`**. See [VERSIONS.md](VERSIONS.md) for 
 | Banana Peel | Leader | Drop behind you: whoever steps on it spins out |
 | Fake Box | Leader | A ? box that BONKs the chaser who grabs it |
 
+Every duration, speed and "what counts as a hit" is in
+[`Documentation/alpha/powerup_reference.md`](Documentation/alpha/powerup_reference.md).
+
 ## Run it locally
 
 1. Unity Hub → **Add** → pick the `Alpha/` folder (Unity 6000.3.x).
@@ -100,7 +103,17 @@ python3 Analytics/visualize.py --csv responses.csv   # or a downloaded CSV
 python3 Analytics/visualize.py --mock                # made-up data, for GDD mockups
 ```
 
-Charts are written to `Analytics/charts/`.
+Charts are written to `Analytics/charts/`. If the sheet is empty or is missing a column, the script stops with a message and leaves the existing charts alone. Bad cells (a typo, `n/a`) are skipped.
+
+### Testing the script
+
+```
+pip install -r Analytics/requirements-dev.txt
+python3 -m pytest Analytics
+```
+
+The tests need no internet. They also check that the power-up and hazard names in `visualize.py`
+still match the Unity code.
 
 ## Project structure
 
@@ -123,7 +136,7 @@ Assets/
 Analytics/                   visualize.py, requirements.txt, charts/
 docs/                        WebGL builds served by GitHub Pages (one folder per milestone)
 Documentation/               paired/, alpha/  (GDD, diagrams, screenshots,
-                             level_design.md, playtest_notes_template.md)
+                             level_design.md, powerup_reference.md, playtest_notes_template.md)
 ```
 
 ## Team
