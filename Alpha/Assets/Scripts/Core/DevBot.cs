@@ -86,6 +86,7 @@ public class DevBot : MonoBehaviour
         float front = pos.x + dir * PlayerController.Size.x / 2f;
         foreach (var h in hazards)
         {
+            if (!h || !h.enabled) continue;   // a lever trap that's switched off isn't in the way
             var b = h.bounds;
             if (LevelBuilder.RowFromY(b.min.y + 0.05f) != row) continue;
             float gap = dir > 0 ? b.min.x - front : front - b.max.x;
