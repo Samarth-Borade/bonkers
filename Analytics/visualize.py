@@ -18,6 +18,7 @@ Needs: pip install -r Analytics/requirements.txt
 import argparse
 import os
 import random
+from typing import Optional
 
 import matplotlib
 matplotlib.use("Agg")
@@ -45,16 +46,40 @@ OTHER_COLOR = "#999"
 # Power-ups you don't aim at the rival, so they have no hit rate
 NOT_AIMED = ("Shield", "SuperJump", "Rocket", "Ghost")
 
+# Rows in a level (LevelBuilder.Rows). A death key looks like "row3:SPIKED".
+ROWS = 6
+ROW_NAMES = [f"row{i}" for i in range(1, ROWS + 1)]
+
+# Columns that hold a plain number. A bad cell in one of these ("n/a", a typo) is ignored.
+NUMBER_COLUMNS = ["level", "round", "race_time", "lead_changes", "finish_gap", "levers", "stomps"]
+
 
 def parse_counts(cell: object) -> dict[str, int]:
-    """'Fist=2;Ghost=1' -> {'Fist': 2, 'Ghost': 1}"""
+    """'Fist=2;Ghost=1' -> {'Fist': 2, 'Ghost': 1}
+    A blank cell gives {}. A malformed pair (no '=', or a count that isn't a number)
+    is skipped, so one bad row can't stop every chart."""
     out = {}
     if isinstance(cell, str):
         for part in cell.split(";"):
-            if "=" in part:
-                k, v = part.split("=", 1)
-                out[k.strip()] = out.get(k.strip(), 0) + int(float(v))
+            key, sep, value = part.partition("=")
+            key = key.strip()
+            if not sep or not key:
+                continue
+            try:
+                count = int(float(value))
+            except (ValueError, OverflowError):
+                continue
+            out[key] = out.get(key, 0) + count
     return out
+
+
+def split_death_key(key: str) -> Optional[tuple[str, str]]:
+    """'row3:SPIKED' -> ('row3', 'SPIKED'). None if the key isn't a row 1-6 plus a hazard."""
+    row, sep, hazard = key.partition(":")
+    row, hazard = row.strip(), hazard.strip()
+    if not sep or not hazard or row not in ROW_NAMES:
+        return None
+    return row, hazard
 
 
 def load(args: argparse.Namespace) -> pd.DataFrame:
@@ -64,8 +89,25 @@ def load(args: argparse.Namespace) -> pd.DataFrame:
     src = args.csv or SHEET_CSV_URL
     if not src:
         raise SystemExit("No data: set SHEET_CSV_URL, or pass --csv FILE, or --mock")
-    df = pd.read_csv(src)
+    try:
+        df = pd.read_csv(src)
+    except pd.errors.EmptyDataError:
+        raise SystemExit(f"{src} is completely empty (not even a header row). Has any race been sent yet?")
     df.columns = [c.strip().lower() for c in df.columns]
+    return df
+
+
+def clean(df: pd.DataFrame) -> pd.DataFrame:
+    """Make the sheet safe to chart. Stops with a clear message if a column is missing;
+    otherwise the number columns become numbers, and a bad cell becomes NaN so only the
+    chart that needs it skips it."""
+    missing = [c for c in COLUMNS if c not in df.columns]
+    if missing:
+        raise SystemExit("The sheet is missing columns: " + ", ".join(missing) +
+                         ". Compare the form question names with COLUMNS in this file.")
+    df = df.copy()
+    for col in NUMBER_COLUMNS:
+        df[col] = pd.to_numeric(df[col], errors="coerce")
     return df
 
 
@@ -116,7 +158,7 @@ def chart_lead_changes(df: pd.DataFrame, mock: bool) -> None:
     """Metric 1: how many races had 0, 1, 2... lead changes.
     Hypothesis: races average at least 3."""
     fig, ax = plt.subplots(figsize=SIZE)
-    counts = df["lead_changes"].astype(int).value_counts().sort_index()
+    counts = df["lead_changes"].dropna().astype(int).value_counts().sort_index()
     ax.bar(counts.index.astype(str), counts.values, color=LEAD_COLOR)
     ax.set_title("Metric 1: Lead changes per race")
     ax.set_xlabel("Times the lead changed hands")
@@ -128,7 +170,7 @@ def chart_finish_gap(df: pd.DataFrame, mock: bool) -> None:
     """Metric 2: average gap (in rows) at the flag, per level.
     Hypothesis: The Gauntlet (level 3) has a larger gap than Lever Lab (level 2)."""
     fig, ax = plt.subplots(figsize=SIZE)
-    means = df.groupby("level")["finish_gap"].mean()
+    means = df.dropna(subset=["level", "finish_gap"]).groupby("level")["finish_gap"].mean()
     ax.bar([f"Level {int(l)}" for l in means.index], means.values, color=GAP_COLOR)
     ax.set_title("Metric 2: Average finish gap by level")
     ax.set_ylabel("Gap at the flag (rows)")
@@ -144,7 +186,7 @@ def chart_powerups(df: pd.DataFrame, mock: bool) -> None:
             used[k] = used.get(k, 0) + v
         for k, v in parse_counts(r["powerup_hits"]).items():
             hits[k] = hits.get(k, 0) + v
-    names = [k for k in sorted(used) if k not in NOT_AIMED]
+    names = [k for k in sorted(used) if k not in NOT_AIMED and used[k] > 0]
     rate = [100 * hits.get(k, 0) / used[k] for k in names]
     fig, ax = plt.subplots(figsize=WIDE_SIZE)
     ax.bar(names, rate, color=HIT_COLOR)
@@ -161,10 +203,13 @@ def chart_deaths(df: pd.DataFrame, mock: bool) -> None:
     table = {}
     for _, r in df.iterrows():
         for k, v in parse_counts(r["deaths"]).items():
-            row, hazard = k.split(":", 1)
+            parsed = split_death_key(k)
+            if parsed is None:
+                continue
+            row, hazard = parsed
             table.setdefault(hazard, {})
             table[hazard][row] = table[hazard].get(row, 0) + v
-    rows = [f"row{i}" for i in range(1, 7)]
+    rows = ROW_NAMES
     fig, ax = plt.subplots(figsize=WIDE_SIZE)
     bottom = [0] * len(rows)
     for hazard, per_row in sorted(table.items()):
@@ -174,7 +219,8 @@ def chart_deaths(df: pd.DataFrame, mock: bool) -> None:
         bottom = [b + v for b, v in zip(bottom, vals)]
     ax.set_title("Metric 4: Deaths by row and hazard")
     ax.set_ylabel("Deaths")
-    ax.legend(fontsize=8)
+    if table:
+        ax.legend(fontsize=8)
     save(fig, "metric4_deaths_by_row.png", mock)
 
 
@@ -184,7 +230,10 @@ def main() -> None:
     ap.add_argument("--mock", action="store_true")
     args = ap.parse_args()
     os.makedirs(OUT, exist_ok=True)
-    df = load(args)
+    df = clean(load(args))
+    if df.empty:
+        raise SystemExit("The sheet has no races yet, so there is nothing to chart. "
+                         "The existing charts were left as they are.")
     print(f"{len(df)} races")
     chart_lead_changes(df, args.mock)
     chart_finish_gap(df, args.mock)

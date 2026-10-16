@@ -103,7 +103,17 @@ python3 Analytics/visualize.py --csv responses.csv   # or a downloaded CSV
 python3 Analytics/visualize.py --mock                # made-up data, for GDD mockups
 ```
 
-Charts are written to `Analytics/charts/`.
+Charts are written to `Analytics/charts/`. If the sheet is empty or is missing a column, the script stops with a message and leaves the existing charts alone. Bad cells (a typo, `n/a`) are skipped.
+
+### Testing the script
+
+```
+pip install -r Analytics/requirements-dev.txt
+python3 -m pytest Analytics
+```
+
+The tests need no internet. They also check that the power-up and hazard names in `visualize.py`
+still match the Unity code.
 
 ## Project structure
 
